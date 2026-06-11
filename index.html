@@ -543,7 +543,7 @@ function gameOver(text){
   showModal('SIGNAL LOST',
    `${text}<br><br><span class="g">Final score: ${score()} — ${D().label}<br>Colonies: ${S.colonies} · Fleet: ${S.bobs.length} · Systems: ${S.stars.filter(s=>s.explored).length}/${S.stars.length} · Kills: ${S.stats.kills}</span>`,
    [{label:'📤 Share final score',cls:'dim',fn:()=>{shareScore();return 'keep'}},
-    {label:'Begin again',cls:'bad',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();setTab('map');intro();}}],'bad');
+    {label:'Begin again',cls:'bad',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();setTab('map');intro();return 'keep';}}],'bad');
   save();
 }
 function shareScore(){
@@ -1299,7 +1299,7 @@ document.addEventListener('click',e=>{
     case 'buy':buyTech(v);break;
     case 'reset':
       showModal('⟲ START A NEW GAME?','All Bobs, colonies and research will be lost to the void. A fresh probe launches into a freshly generated, bigger galaxy — you pick the difficulty.',
-       [{label:'Yes — start over',cls:'bad',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();setTab('map');intro();}},
+       [{label:'Yes — start over',cls:'bad',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();setTab('map');intro();return 'keep';}},
         {label:'No — keep going',cls:'dim'}]);
       break;
   }
