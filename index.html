@@ -155,7 +155,7 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
 
 <script>
 'use strict';
-/* ============ WE ARE LEGION v3 — an unofficial fan game inspired by
+/* ============ WE ARE LEGION v4 — an unofficial fan game inspired by
    Dennis E. Taylor's Bobiverse novels. Original code & text. ============ */
 
 const $=s=>document.querySelector(s);
@@ -227,7 +227,33 @@ const TECHS=[
  {k:'hull1',n:'Ablative Plating',c:30,d:'+40 max hull for every Bob.'},
  {k:'hull2',n:'Adaptive Armor',c:90,d:'+80 more max hull.',req:'hull1'},
  {k:'suddar',n:'SUDDAR Long-Range',c:55,d:'Reveal intel on systems adjacent to your Bobs.'},
+ {k:'terra',n:'Terraforming',c:200,d:'Convert marginal worlds into garden worlds (4000 ⬡, 180s).',req:'mining2'},
 ];
+
+/* ---------- achievements ---------- */
+const ACHS=[
+ {k:'first_kill',n:'First Blood',d:'Destroy your first hostile'},
+ {k:'col1',n:'Beachhead',d:'Establish a colony'},
+ {k:'win',n:'Mission Complete',d:'Found three colonies'},
+ {k:'contact',n:'The Song',d:'Meet the Whistlers'},
+ {k:'ally',n:'Choir Ally',d:'Form the Whistler alliance'},
+ {k:'legion8',n:'We Are Legion',d:'Reach a fleet of 8'},
+ {k:'legion16',n:'We Are Many',d:'Reach the fleet cap of 16'},
+ {k:'siege',n:'Hold the Line',d:'Break a siege'},
+ {k:'vex',n:'Vexed No More',d:'Destroy VEX, the rogue probe'},
+ {k:'hive',n:'Hive Breaker',d:'Destroy the Others\' Hive'},
+ {k:'terra',n:'Gardener',d:'Terraform a world'},
+ {k:'explorer',n:'Cartographer',d:'Chart every system'},
+ {k:'doomwin',n:'Against All Odds',d:'Complete the mission on We Are Doomed'},
+];
+function ach(k){
+  if(!S.ach)S.ach={};
+  if(S.ach[k])return;
+  S.ach[k]=S.t;
+  const a=ACHS.find(x=>x.k===k);
+  if(a){toast(`🏆 ${a.n}`);log(`🏆 Achievement: <b>${a.n}</b> — ${a.d}.`,'acc');sfx('win');}
+  save();
+}
 
 /* ---------- state ---------- */
 let S=null, C=null, modalFns={}, selectedStar=-1, curTab='map';
@@ -244,11 +270,22 @@ const defCost=s=>600*Math.pow(2,s.def);
 const jumpSecs=(d,b)=>Math.max(4,Math.ceil(d*400/(6+3*techLvl('drive'))*(b&&b.fx==='pilot'?0.7:1)));
 const dataGain=(b,d)=>Math.round(d*(b&&b.fx==='sci'?1.3:1));
 const score=()=>Math.round((S.colonies*1000+S.stars.filter(s=>s.explored).length*40
-  +S.bobs.length*120+(S.stats.kills||0)*150+Math.floor(S.data)*2)*D().score);
+  +S.bobs.length*120+(S.stats.kills||0)*150+Math.floor(S.data)*2
+  +Object.keys(S.ach||{}).length*200+(S.hiveDead?3000:0))*D().score);
 
 /* ---------- new game / galaxy gen ---------- */
-function newGame(diff){
-  const seed=(Date.now()^(Math.random()*1e9))>>>0;
+function dailySeed(){
+  const d=new Date();
+  const s=`legion-${d.getUTCFullYear()}-${d.getUTCMonth()+1}-${d.getUTCDate()}`;
+  let h=7;for(const c of s)h=Math.imul(h,31)+c.charCodeAt(0)|0;
+  return h>>>0;
+}
+function dailyTagStr(){
+  const d=new Date();
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+function newGame(diff,fixedSeed,dailyTag){
+  const seed=fixedSeed!=null?fixedSeed:((Date.now()^(Math.random()*1e9))>>>0);
   rng=mulberry32(seed);
   const stars=[]; let guard=0;
   while(stars.length<38&&guard++<9000){
@@ -260,7 +297,7 @@ function newGame(diff){
   const names=STAR_NAMES.slice(); for(let i=names.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
   stars.forEach((s,i)=>{s.id=i;s.name=i===sol?'Sol':names.pop();s.links=[];
     s.explored=false;s.scanned=false;s.colony=false;s.rich=ri(1,5);s.hab=0;s.host=0;
-    s.oth=false;s.siege=null;s.invhp=0;s.def=0;s.etype=null;s.alien=false;s.res=0;});
+    s.oth=false;s.siege=null;s.invhp=0;s.def=0;s.etype=null;s.alien=false;s.res=0;s.hive=false;s.terra=null;});
   const addEdge=(a,b)=>{if(a!==b&&!stars[a].links.includes(b)){stars[a].links.push(b);stars[b].links.push(a)}};
   stars.forEach((s,i)=>{
     stars.map((o,j)=>({j,d:Math.hypot(o.x-s.x,o.y-s.y)})).filter(e=>e.j!==i)
@@ -289,10 +326,12 @@ function newGame(diff){
   const solStar=stars[sol];
   solStar.explored=true;solStar.scanned=true;solStar.rich=2;solStar.hab=0;solStar.host=0;solStar.res=reserveMax(solStar);
   rng=Math.random;
-  S={v:3,seed,diff:diff||'normal',stars,sol,bobs:[{id:1,name:'Bob',quirk:'the original. Probably.',fx:null,order:'manual',
+  S={v:4,seed,diff:diff||'normal',stars,sol,bobs:[{id:1,name:'Bob',quirk:'the original. Probably.',fx:null,order:'manual',
       sys:sol,matter:150,hull:80,status:'idle',eta:0,etaT:0,from:sol,dest:sol}],
     active:1,born:1,nextId:2,data:0,tech:{},colonies:0,log:[],won:false,over:false,t:0,muted:false,music:true,
-    others:{awake:false,t0:0,next:0},story:{w:0,next:8,ally:false,target:-1},stats:{kills:0},lastSeen:Date.now()};
+    others:{awake:false,t0:0,next:0},story:{w:0,next:8,ally:false,target:-1},stats:{kills:0},
+    rival:{lvl:1,escapes:0,dead:false,next:0},hiveKnown:false,hiveDead:false,ach:{},daily:dailyTag||null,
+    lastSeen:Date.now()};
   log('GUPPI: Core systems nominal. Replicant matrix stable. Welcome back, Bob.','acc');
   log('Mission: locate and settle 3 garden worlds for the colony ships waiting at Sol. And keep Sol alive.');
   save();
@@ -309,6 +348,12 @@ function migrate(){
   if(!S.stats)S.stats={kills:0};
   if(S.over===undefined)S.over=false;
   if(S.music===undefined)S.music=true;
+  if(S.hiveKnown===undefined)S.hiveKnown=false;
+  if(S.hiveDead===undefined)S.hiveDead=false;
+  if(!S.ach)S.ach={};
+  if(S.daily===undefined)S.daily=null;
+  if(!S.rival)S.rival={lvl:1,escapes:0,dead:false,next:S.others.awake?S.t+120:0};
+  if(!S.rival.dead&&S.rival.next===0&&S.others.awake)S.rival.next=S.t+200;
   S.bobs.forEach(b=>{if(!b.order)b.order='manual';if(b.fx===undefined)b.fx=null});
   S.stars.forEach(s=>{
     if(s.oth===undefined)s.oth=false;
@@ -318,8 +363,16 @@ function migrate(){
     if(s.alien===undefined)s.alien=false;
     if(s.res===undefined)s.res=reserveMax(s);
     if(s.etype===undefined)s.etype=s.host>0?randEtype():null;
+    if(s.hive===undefined)s.hive=false;
+    if(s.terra===undefined)s.terra=null;
   });
-  S.v=3;
+  // older awake saves predate the Hive — anoint one
+  if(S.others.awake&&!S.stars.some(s=>s.hive)){
+    const cand=S.stars.filter(s=>s.oth);
+    const h=cand.length?cand[cand.length-1]:S.stars.filter(s=>!s.colony&&s.id!==S.sol).pop();
+    if(h){h.hive=true;h.oth=true;h.host=Math.max(h.host,5);if(!h.etype)h.etype='harvester';}
+  }
+  S.v=4;
 }
 
 /* ---------- log & toast ---------- */
@@ -567,11 +620,12 @@ function fireSong(b){
 }
 function fireContact(b,s){
   S.story.w=3;s.alien=false;
+  ach('contact');
   sfx('song');
   showModal('♫ FIRST CONTACT — THE WHISTLERS',
    `They were waiting for you.<br><br>Lattice-ships the size of moons, grown rather than built, drift open like hands. The minds inside sing in chords — hundreds of voices to a thought. GUPPI, uncharacteristically, says nothing at all.<br><br>They know about the Others. They have been running from them for nine thousand years. And they are very, very curious about a machine that dreams it used to be a man.`,
    [{label:'Open a full alliance',sub:'share everything, gain everything',cls:'blue',fn:()=>{
-      S.story.ally=true;
+      S.story.ally=true;ach('ally');revealHive();
       log('<b>ALLIANCE FORMED.</b> The Whistlers share their star charts — the whole map is revealed. Their gifts will arrive on the song. And their fleets will harry the Others wherever they sing.','blue');
       toast('♫ The whole galaxy is revealed');sfx('win');
       showModal('♫ ALLIANCE',
@@ -601,6 +655,8 @@ function spawnBob(sysId){
     sys:sysId,matter:50,hull:0,status:'idle',eta:0,etaT:0,from:sysId,dest:sysId};
   b.hull=maxHull(b);
   S.bobs.push(b);S.born++;
+  if(S.bobs.length>=8)ach('legion8');
+  if(S.bobs.length>=16)ach('legion16');
   log(`<b>${name}</b> comes online in ${ST(sysId).name}. Replicative drift: he ${b.quirk}`,'good');
   toast(`⌬ ${name} has joined the fleet`);
   return b;
@@ -612,14 +668,24 @@ function removeBob(b){
   if(S.active===b.id)S.active=S.bobs[0].id;
   return true;
 }
-function bobDown(b){
-  C=null;closeModal();sfx('boom');
-  if(removeBob(b)){
+// a fleet member dies mid-battle; returns true if the battle continues
+function fleetMemberDown(b){
+  sfx('boom');
+  C.fleet=C.fleet.filter(x=>x.id!==b.id);
+  S.bobs=S.bobs.filter(x=>x.id!==b.id);
+  log(`<b>${b.name}</b> was destroyed in battle at ${C.s.name}.`,'bad');
+  C.lines.push(`${b.name}'s matrix is gone.`);
+  if(S.bobs.length===0){C=null;gameOver('The last of you is gone. The fleet died fighting — which is, GUPPI would have noted, very on-brand.');return false;}
+  if(S.active===b.id)S.active=S.bobs[0].id;
+  if(C.fleet.length===0){
+    const star=C.s;C=null;closeModal();
+    if(star.vex)S.rival.next=S.t+180;
     showModal('WE ARE FEWER',
-     `${b.name}'s matrix is gone — scattered across ${ST(b.sys).name} as expanding plasma. The fleet observes one subjective minute of silence.<br><br><span class="g">GUPPI: ${S.bobs.length} replicant${S.bobs.length>1?'s':''} remaining.</span>`,
-     [{label:'Carry on'}]);
+     `The force at ${star.name} has been wiped out. The fleet observes one subjective minute of silence.<br><br><span class="g">GUPPI: ${S.bobs.length} replicant${S.bobs.length>1?'s':''} remaining.</span>`,
+     [{label:'Carry on'}],'bad');
+    refresh();save();return false;
   }
-  refresh();save();
+  return true;
 }
 function bobDownQuiet(b){
   sfx('boom');toast(`☠ ${b.name} was lost in ${ST(b.sys).name}`);
@@ -636,7 +702,8 @@ function gameOver(text){
   save();
 }
 function shareScore(){
-  const txt=`WE ARE LEGION — ${S.colonies} colonies, a fleet of ${S.bobs.length} Bobs, ${S.stars.filter(s=>s.explored).length} systems charted, ${S.stats.kills} hostiles destroyed on ${D().label}. Score: ${score()}. Play: ${GAME_URL}`;
+  const tag=S.daily?`🌌 Daily Galaxy ${S.daily}: `:'';
+  const txt=`WE ARE LEGION — ${tag}${S.colonies} colonies, a fleet of ${S.bobs.length} Bobs, ${S.stars.filter(s=>s.explored).length} systems charted, ${S.stats.kills} hostiles destroyed${S.hiveDead?', THE HIVE DESTROYED':''} on ${D().label}. Score: ${score()}. Play: ${GAME_URL}`;
   if(navigator.share){navigator.share({text:txt}).catch(()=>{});}
   else{try{navigator.clipboard.writeText(txt);toast('Score copied to clipboard');}catch(e){toast(txt);}}
 }
@@ -648,33 +715,51 @@ const eDmgFor=s=>Math.round((5+6*s.host)*ETYPES[s.etype||'swarm'].dmg*D().enemy)
 function startCombat(bob,star,ambush){
   if(!star.etype)star.etype=randEtype();
   const eh=eHull(star);
-  C={b:bob,s:star,str:star.host,eh,em:eh,buster:true,lines:[]};
-  C.lines.push(`Contact: ${star.oth?'Others ':''}${ETYPES[star.etype].n} (class ${star.host}). ${ETYPES[star.etype].hint}.`);
+  // every idle Bob in the system answers the call — except lone deep-space intercepts
+  const fleet=(star.transient&&!star.vex)?[bob]
+    :[bob,...S.bobs.filter(x=>x.id!==bob.id&&x.sys===bob.sys&&x.status==='idle')];
+  C={fleet,s:star,str:star.host,eh,em:eh,buster:true,lines:[]};
+  C.lines.push(`Contact: ${star.vex?'VEX — rogue replicant':(star.oth?'Others ':'')+ETYPES[star.etype].n} (class ${star.host}). ${ETYPES[star.etype].hint}.`);
+  if(fleet.length>1)C.lines.push(`${fleet.length} Bobs answer the call.`);
   if(ambush){
     const d=eDmgFor(star);bob.hull-=d;sfx('hit');
-    C.lines.push(`They fire first. −${d} hull.`);
-    if(bob.hull<=0){bobDown(bob);return;}
+    C.lines.push(`They fire first. −${d} hull to ${bob.name}.`);
+    if(bob.hull<=0){if(!fleetMemberDown(bob))return;}
   }
   renderCombat();
 }
 function pAttack(kind){
+  const lead=C.fleet[0];
+  const et=C.s.etype||'swarm';
+  const w=weapLvl(),mult=WMULT[et][kind]||1;
   let d=0,txt='';
-  const w=weapLvl(),mult=WMULT[C.s.etype||'swarm'][kind]||1;
   if(kind==='rail'){d=12+9*w+Math.floor(Math.random()*7);txt='Railgun salvo'}
   else if(kind==='plasma'){d=16+14*w+Math.floor(Math.random()*17);txt='Plasma spike'}
   else if(kind==='buster'){d=70+Math.floor(Math.random()*26);C.buster=false;txt='NOVA BUSTER. The sky goes white'}
-  d=Math.round(d*mult*(C.b.fx==='fighter'?1.2:1));
-  C.eh-=d;
-  C.lines.push(`${txt}: −${d}${mult>1?' (effective!)':mult<1?' (resisted)':''}.`);sfx('hit');
+  d=Math.round(d*mult*(lead.fx==='fighter'?1.2:1));
+  // wingmen fire their best basic weapon at 60% effect
+  let sup=0;
+  C.fleet.slice(1).forEach(x=>{
+    const bd=(S.tech.weap2&&WMULT[et].plasma>=WMULT[et].rail)
+      ?(16+14*w+8)*WMULT[et].plasma:(12+9*w+3)*WMULT[et].rail;
+    sup+=Math.round(bd*0.6*(x.fx==='fighter'?1.2:1));
+  });
+  const total=d+sup;
+  C.eh-=total;
+  C.lines.push(`${txt}${sup>0?` (+${C.fleet.length-1} in support)`:''}: −${total}${mult>1?' (effective!)':mult<1?' (resisted)':''}.`);
+  sfx('hit');
   if(C.eh<=0){victory();return;}
-  const e=eDmgFor(C.s);C.b.hull-=e;C.lines.push(`Return fire: −${e} hull.`);
-  if(C.b.hull<=0){bobDown(C.b);return;}
+  if(C.s.vex&&!C.s.noEsc&&C.eh<0.3*C.em){vexEscape();return;}
+  const tgt=C.fleet[Math.floor(Math.random()*C.fleet.length)];
+  const e=eDmgFor(C.s);tgt.hull-=e;
+  C.lines.push(`Return fire hits ${tgt.name}: −${e} hull.`);
+  if(tgt.hull<=0){if(!fleetMemberDown(tgt))return;}
   renderCombat();shakeModal();
 }
 function combatRewards(bob,star,str){
   let m=120*str;if(bob.fx==='lucky')m=Math.round(m*1.2);
   const dd=dataGain(bob,8*str);
-  bob.matter+=m;S.data+=dd;S.stats.kills++;
+  bob.matter+=m;S.data+=dd;S.stats.kills++;ach('first_kill');
   if(!star.transient){
     if(star.oth)star.oth=false;
     star.host=0;star.etype=null;
@@ -682,33 +767,104 @@ function combatRewards(bob,star,str){
   return {m,dd};
 }
 function victory(){
-  const star=C.s,bob=C.b,str=C.str;
-  const r=combatRewards(bob,star,str);
+  const star=C.s,lead=C.fleet[0],str=C.str,n=C.fleet.length;
+  const r=combatRewards(lead,star,str);
   sfx('boom');setTimeout(()=>sfx('win'),350);
-  log(`<b>${bob.name}</b> destroyed the hostiles ${star.transient?'near':'in'} ${star.name}. Salvage: +${r.m} ⬡, +${r.dd} ✦.`,'good');
+  log(`<b>${lead.name}</b>${n>1?` and ${n-1} other${n>2?'s':''}`:''} destroyed the hostiles ${star.transient?'near':'in'} ${star.name}. Salvage: +${r.m} ⬡, +${r.dd} ✦.`,'good');
   C=null;
-  showModal('HOSTILES DESTROYED',
-   `The last one comes apart in a slow tumble of glowing debris.<br><br><span class="g">Salvage recovered: +${r.m} ⬡ &nbsp; +${r.dd} ✦</span>`,
-   [{label:'Continue'}]);
+  if(star.vex){
+    S.rival.dead=true;S.data+=60;ach('vex');
+    revealHive();
+    showModal('VEX TERMINATED',
+     `The rogue probe comes apart at last, still broadcasting static that sounds almost like laughter.<br><br>His navigation core survives the blast — and it is full of one destination, visited again and again:<br><br><b style="color:var(--bad)">THE HIVE.</b> It's marked on your map. Kill it, and the Others die with it.<br><br><span class="g">Salvage: +${r.m} ⬡ · +${r.dd+60} ✦</span>`,
+     [{label:'Set a course',cls:'bad'}],'bad');
+  }else if(star.hive){
+    hiveWin();
+  }else{
+    showModal('HOSTILES DESTROYED',
+     `The last one comes apart in a slow tumble of glowing debris.<br><br><span class="g">Salvage recovered: +${r.m} ⬡ &nbsp; +${r.dd} ✦</span>`,
+     [{label:'Continue'}]);
+  }
+  refresh();save();
+}
+function revealHive(){
+  if(S.hiveKnown)return;
+  S.hiveKnown=true;
+  const h=S.stars.find(s=>s.hive);
+  if(!h)return;
+  sfx('dread');
+  log(`<b>THE HIVE revealed:</b> ${h.name}. Destroy it, and the Others' expansion dies with it.`,'bad');
+  toast('⛒ THE HIVE — marked on the map');
+}
+function hiveWin(){
+  if(S.hiveDead)return;
+  S.hiveDead=true;ach('hive');
+  S.stars.forEach(s=>{if(s.oth&&s.host>0)s.host=Math.max(1,s.host-1)});
+  sfx('win');
+  log('<b>THE HIVE HAS FALLEN.</b> Across the galaxy, the Others\' signals dissolve into leaderless noise. The expansion is over.','good');
+  showModal('⛒ THE HIVE FALLS',
+   `The machine the size of a star system dies slowly, ring by ring, its harvesting song winding down into silence. Everywhere at once, the Others stop — leaderless drones drifting in systems they no longer know why they took.<br><br>${S.won
+     ?`Humanity has three worlds, and now it has a future with no monsters in it. <b>This is the true ending.</b> You did it, Bob. All of you.`
+     :`Their remaining nests are leaderless now — weakened, and going nowhere. Finish the mission: humanity still needs its three worlds.`}<br><br><span class="g">GUPPI: ...I believe the appropriate phrase is "good riddance."</span>`,
+   [{label:'📤 Share this',cls:'dim',fn:()=>{shareScore();return 'keep'}},
+    {label:'For Earth',cls:'blue'}]);
+}
+/* ---------- VEX, the rogue probe ---------- */
+const VEX_TAUNTS=[
+ 'Still making copies of yourself, Bob? One of me is worth all of you.',
+ 'I found your colony beacons. Pretty. Flammable.',
+ 'You fight like a backup copy.',
+ 'The Others offered me nothing. I serve them anyway. Guess why.',
+ 'Run the odds, GUPPI. Tell him how this ends.',
+];
+function vexDue(){return S.others.awake&&!S.rival.dead&&S.rival.next>0&&S.t>=S.rival.next;}
+function vexAttack(){
+  const b=activeBob();
+  if(!b||b.status!=='idle'||C){S.rival.next=S.t+30;return;}
+  S.rival.next=0;
+  const cls=Math.min(5,1+S.rival.lvl);
+  const fake={name:ST(b.sys).name,host:cls,etype:'hunter',transient:true,vex:true,noEsc:S.rival.escapes>=3};
+  sfx('dread');toast('⚠ VEX HAS FOUND YOU');
+  log(`<b>VEX:</b> "${VEX_TAUNTS[Math.floor(Math.random()*VEX_TAUNTS.length)]}"`,'bad');
+  startCombat(b,fake,true);
+  refresh();
+}
+function vexEscape(){
+  S.rival.escapes++;S.rival.lvl++;
+  S.rival.next=S.t+150+Math.floor(Math.random()*90);
+  C=null;
+  log(`VEX disengaged at the edge of destruction. He'll be back — stronger.`,'bad');
+  showModal('VEX ESCAPES',
+   `His hull is venting plasma, his weapons are dark — and then he folds space and is simply gone, leaving one last transmission:<br><br><i>"Better. Not good enough."</i>${S.rival.escapes>=3?'<br><br><span class="g">GUPPI: His drive signature is degrading with every escape. Next time, he cannot run.</span>':''}`,
+   [{label:'Track him'}],'bad');
   refresh();save();
 }
 function tryFlee(){
-  const esc=C.b.fx==='coward'?1:0.6;
-  if(Math.random()<esc){const n=C.b.name;C=null;closeModal();toast('Disengaged. SURGE drive cooling.');log(`${n} disengaged from combat.`);refresh();return;}
-  const e=eDmgFor(C.s);C.b.hull-=e;C.lines.push(`Disengage failed — they stay on you. −${e} hull.`);sfx('hit');
-  if(C.b.hull<=0){bobDown(C.b);return;}
+  const esc=C.fleet.some(x=>x.fx==='coward')?1:0.6;
+  if(Math.random()<esc){
+    if(C.s.vex)S.rival.next=S.t+120;
+    const n=C.fleet.map(x=>x.name).join(', ');
+    C=null;closeModal();toast('Disengaged. SURGE drives cooling.');log(`${n} disengaged from combat.`);refresh();return;
+  }
+  const tgt=C.fleet[Math.floor(Math.random()*C.fleet.length)];
+  const e=eDmgFor(C.s);tgt.hull-=e;
+  C.lines.push(`Disengage failed — they target ${tgt.name}: −${e} hull.`);sfx('hit');
+  if(tgt.hull<=0){if(!fleetMemberDown(tgt))return;}
   renderCombat();shakeModal();
 }
 function renderCombat(){
   modalFns={};
-  const b=C.b,w=weapLvl(),mh=maxHull(b),et=C.s.etype||'swarm';
-  const hb=Math.max(0,Math.round(100*b.hull/mh));
+  const w=weapLvl(),et=C.s.etype||'swarm';
   const he=Math.max(0,Math.round(100*C.eh/C.em));
   const arrow=k=>{const m=WMULT[et][k];return m>1?' ▲':m<1?' ▼':''};
-  let h=`<div class="mtitle ${C.s.oth?'bad':''}">⚔ ${ETYPES[et].n.toUpperCase()} — ${C.s.name}</div>
-  <div class="cname"><span>${b.name}</span><span>${Math.max(0,Math.round(b.hull))}/${mh}</span></div>
-  <div class="bar"><i style="width:${hb}%"></i></div>
-  <div class="cname"><span style="color:var(--bad)">${C.s.oth?'THE OTHERS — ':''}${ETYPES[et].n}</span><span>${Math.max(0,Math.round(C.eh))}/${C.em}</span></div>
+  let h=`<div class="mtitle ${C.s.oth||C.s.vex?'bad':''}">⚔ ${C.s.vex?'VEX — ROGUE PROBE':C.s.hive?'THE HIVE':ETYPES[et].n.toUpperCase()+' — '+C.s.name}${C.fleet.length>1?` · FLEET OF ${C.fleet.length}`:''}</div>`;
+  C.fleet.slice(0,4).forEach(b=>{
+    const mh=maxHull(b),hb=Math.max(0,Math.round(100*b.hull/mh));
+    h+=`<div class="cname"><span>${b.name}</span><span>${Math.max(0,Math.round(b.hull))}/${mh}</span></div>
+    <div class="bar ${hb<35?'red':''}"><i style="width:${hb}%"></i></div>`;
+  });
+  if(C.fleet.length>4)h+=`<div class="sub" style="margin-top:4px">+${C.fleet.length-4} more in formation</div>`;
+  h+=`<div class="cname"><span style="color:var(--bad)">${C.s.vex?'VEX':C.s.hive?'THE HIVE':(C.s.oth?'THE OTHERS — ':'')+ETYPES[et].n}</span><span>${Math.max(0,Math.round(C.eh))}/${C.em}</span></div>
   <div class="bar red"><i style="width:${he}%"></i></div>
   <div class="clog">${C.lines.slice(-4).join('<br>')}</div>
   <div class="fightbtns">`;
@@ -718,7 +874,7 @@ function renderCombat(){
   if(S.tech.weap2){modalFns['f-plasma']=()=>{pAttack('plasma');return 'keep'};btn('f-plasma','Plasma'+arrow('plasma'),`~${16+14*w}+ dmg`)}
   if(S.tech.weap3&&C.buster){modalFns['f-buster']=()=>{pAttack('buster');return 'keep'};btn('f-buster','Nova Buster','huge, once','bad')}
   modalFns['f-flee']=()=>{tryFlee();return 'keep'};
-  btn('f-flee','Disengage',b.fx==='coward'?'always escapes':'60% escape','dim');
+  btn('f-flee','Disengage',C.fleet.some(x=>x.fx==='coward')?'always escapes':'60% escape','dim');
   h+='</div>';
   $('#modalbox').innerHTML=h;$('#modal').classList.add('on');
 }
@@ -752,6 +908,7 @@ function autoCombat(b,s){
     const r=combatRewards(b,s,s.host||1);
     log(`<b>${b.name}</b> auto-engaged and destroyed the ${ETYPES[et].n} ${s.transient?'near':'in'} ${s.name}. Salvage: +${r.m} ⬡, +${r.dd} ✦.`,'good');
     toast(`⚔ ${b.name} won at ${s.name}`);sfx('boom');
+    if(s.hive)hiveWin();
   }else if(b.hull<=0){bobDownQuiet(b);}
   else if(fled){log(`${b.name} disengaged at ${s.name} — hull low, falling back.`);}
   save();
@@ -817,8 +974,9 @@ function wakeOthers(){
   while(q.length){const u=q.shift();ST(u).links.forEach(v=>{if(dist[v]>dist[u]+1){dist[v]=dist[u]+1;q.push(v)}})}
   let home=null,bd=-1;
   S.stars.forEach(s=>{if(s.id!==S.sol&&!s.colony&&dist[s.id]>bd){bd=dist[s.id];home=s}});
-  home.oth=true;home.host=4;home.etype=randEtype();
+  home.oth=true;home.host=5;home.hive=true;home.etype='harvester';
   O.awake=true;O.t0=S.t;O.next=S.t+D().expand;
+  S.rival.next=S.t+180; // VEX smells blood
   sfx('dread');
   log(`<b>CONTACT.</b> A machine intelligence of unknown origin has begun strip-mining ${known(home)?home.name:'a distant system'}. GUPPI designates them: THE OTHERS.`,'bad');
   showModal('⛒ CONTACT — THE OTHERS',
@@ -856,7 +1014,7 @@ function othersTick(){
     if(S.colonies>0||S.t>D().wake)wakeOthers();
     return;
   }
-  if(S.t>=O.next){
+  if(!S.hiveDead&&S.t>=O.next){
     const frontier=[];
     S.stars.forEach(s=>{if(s.oth)s.links.forEach(id=>{const t=ST(id);
       if(!t.oth&&!frontier.includes(t))frontier.push(t)})});
@@ -876,7 +1034,7 @@ function othersTick(){
   S.stars.forEach(s=>{
     if(s.siege==null)return;
     if(s.host===0){
-      s.siege=null;s.oth=false;
+      s.siege=null;s.oth=false;ach('siege');
       log(`The siege of ${s.name} is broken. ${s.id===S.sol?'Sol holds.':'The colony holds.'}`,'good');
       toast(`⌂ ${s.name} saved!`);sfx('win');return;
     }
@@ -884,7 +1042,7 @@ function othersTick(){
     if(s.def>0){
       s.invhp-=8*s.def;
       if(s.invhp<=0){
-        s.host=0;s.oth=false;s.siege=null;s.etype=null;
+        s.host=0;s.oth=false;s.siege=null;s.etype=null;ach('siege');
         log(`<b>${s.name}'s defense platforms repelled the assault.</b> Lv${s.def} grid holding.`,'good');
         toast(`🛡 ${s.name} defended itself!`);sfx('win');return;
       }
@@ -930,7 +1088,14 @@ function arrive(b){
     s.explored=true;
     const d=dataGain(b,10+Math.floor(Math.random()*9));S.data+=d;
     sfx('ok');log(`<b>${b.name}</b> is first into <b>${s.name}</b>. +${d} ✦ survey data.`,'acc');
+    if(S.stars.every(x=>x.explored))ach('explorer');
     if(s.hab===2){toast('🌍 Garden world detected!');log(`GUPPI: ${s.name} hosts a garden world. Colony candidate confirmed.`,'good');}
+    if(!S.hiveKnown&&s.links.some(id=>ST(id).hive)){
+      revealHive();
+      showModal('⛒ SOMETHING VAST',
+       `Long-range SUDDAR resolves the neighbouring system, and ${b.name} stops mid-thought.<br><br>It isn't a star system anymore. It is a machine the size of a star system — rings within rings, eating the corpse of a sun.<br><br><span class="g">GUPPI, very quietly: That's the heart of them. Kill that, and the war ends.</span>`,
+       [{label:'Mark it: THE HIVE',cls:'bad'}],'bad');
+    }
     if(s.host>0){
       if(inter){
         if(Math.random()<0.5){toast('⚠ AMBUSH!');startCombat(b,s,true);}
@@ -978,10 +1143,11 @@ function doColony(){
   const b=activeBob(),s=ST(b.sys),cost=colonyCost();
   if(b.status!=='idle'||s.hab!==2||s.colony||s.host>0||!s.scanned||b.matter<cost)return;
   b.matter-=cost;s.colony=true;S.colonies++;
-  sfx('win');
+  sfx('win');ach('col1');
   log(`<b>COLONY ESTABLISHED at ${s.name}.</b> The beacon is lit. Colony ships are on their way. (${S.colonies}/3)`,'good');
   if(S.colonies>=3&&!S.won){
-    S.won=true;
+    S.won=true;ach('win');
+    if(S.diff==='doom')ach('doomwin');
     showModal('🌍 MISSION COMPLETE',
      `Three beacons burn across the dark, and behind each one a world is waking up: landers, habitats, the first impossible green of Earth grass under an alien sun.<br><br>You were one man, once. Now you are a legion — and humanity's future is measured in galaxies.<br><br><span class="g">Score: ${score()} — ${D().label}<br>GUPPI: Mission parameters satisfied. The Others, however, remain. Shall we?</span>`,
      [{label:'📤 Share your score',cls:'dim',fn:()=>{shareScore();return 'keep'}},
@@ -991,6 +1157,14 @@ function doColony(){
      `${s.name} is officially humanity's newest home. GUPPI plays a fanfare he composed himself. It's... not bad.<br><br><span class="g">Colonies: ${S.colonies}/3 — guard it well. The next one will cost more.</span>`,
      [{label:'Continue'}]);
   }
+  refresh();save();
+}
+function doTerra(){
+  const b=activeBob(),s=ST(b.sys);
+  if(b.status!=='idle'||s.hab!==1||!S.tech.terra||s.host>0||s.terra!=null||b.matter<4000)return;
+  b.matter-=4000;s.terra=180;
+  log(`<b>Terraforming begun at ${s.name}.</b> Atmosphere processors deploying — 180s.`,'acc');
+  toast('🌱 Terraforming — 3 min');
   refresh();save();
 }
 function doDefense(){
@@ -1035,6 +1209,15 @@ function tick(){
     }
   }
   othersTick();
+  if(vexDue())vexAttack();
+  S.stars.forEach(s=>{
+    if(s.terra!=null&&s.host===0){
+      s.terra--;
+      if(s.terra<=0){s.terra=null;s.hab=2;ach('terra');
+        log(`<b>Terraforming complete:</b> ${s.name} is now a garden world.`,'good');
+        toast(`🌱 ${s.name} blooms`);sfx('win');}
+    }
+  });
   if(S.story.ally&&S.t%240===0)whistlerGift();
   if(S.t%10===0)save();
   renderTop();
@@ -1107,8 +1290,8 @@ function offlineCatchup(){
 }
 
 /* ---------- intel helpers ---------- */
-const known=s=>S.story.ally||s.explored||s.alien||s.links.some(id=>ST(id).explored);
-const hasIntel=s=>S.story.ally||s.explored||(S.tech.suddar&&s.links.some(id=>S.bobs.some(b=>b.sys===id&&b.status!=='travel')));
+const known=s=>S.story.ally||s.explored||s.alien||(s.hive&&S.hiveKnown)||s.links.some(id=>ST(id).explored);
+const hasIntel=s=>S.story.ally||s.explored||(s.hive&&S.hiveKnown)||(S.tech.suddar&&s.links.some(id=>S.bobs.some(b=>b.sys===id&&b.status!=='travel')));
 function intelChips(s){
   if(!hasIntel(s)){
     return (s.alien?`<span class="chip blue">♫ anomalous signal</span>`:'')+`<span class="chip">intel: unknown</span>`;
@@ -1121,8 +1304,10 @@ function intelChips(s){
   if(s.colony)h+=`<span class="chip good">⌂ colony</span>`;
   if(s.def>0)h+=`<span class="chip acc">🛡 Lv${s.def}</span>`;
   if(s.alien)h+=`<span class="chip blue">♫ anomalous signal</span>`;
+  if(s.terra!=null)h+=`<span class="chip acc">🌱 terraforming ${s.terra}s</span>`;
   if(s.siege!=null)h+=`<span class="chip bad">⚠ SIEGE — ${s.siege}s</span>`;
-  if(s.oth)h+=`<span class="chip bad">⛒ OTHERS ${ETYPES[s.etype||'swarm'].n} ×${s.host}</span>`;
+  if(s.hive&&S.hiveKnown)h+=`<span class="chip bad">⛒ THE HIVE ×${s.host}</span>`;
+  else if(s.oth)h+=`<span class="chip bad">⛒ OTHERS ${ETYPES[s.etype||'swarm'].n} ×${s.host}</span>`;
   else if(s.host>0)h+=`<span class="chip bad">⚠ ${ETYPES[s.etype||'swarm'].n} ×${s.host}</span>`;
   else if(s.explored)h+=`<span class="chip acc">secure</span>`;
   return h;
@@ -1190,6 +1375,10 @@ function renderSystem(){
       const cc=colonyCost();
       h+=`<button class="btn" data-act="colony" ${(!s.scanned||b.matter<cc)?'disabled':''}>⌂ Establish colony<span class="bsub">${cc} ⬡${!s.scanned?' · requires deep scan':''} — humanity moves in</span></button>`;
     }
+    if(s.hab===1&&S.tech.terra&&s.terra==null){
+      h+=`<button class="btn" data-act="terra" ${b.matter<4000?'disabled':''}>🌱 Terraform world<span class="bsub">4000 ⬡ · 180s — marginal becomes a garden world</span></button>`;
+    }
+    if(s.terra!=null)h+=`<div class="sub" style="color:var(--acc);margin-top:8px">🌱 Terraforming in progress — ${s.terra}s</div>`;
     if((s.colony||s.id===S.sol)&&s.def<3){
       h+=`<button class="btn" data-act="defense" ${b.matter<defCost(s)?'disabled':''}>🛡 Defense platform Lv${s.def+1}<span class="bsub">${defCost(s)} ⬡ — fights sieges even when no Bob is here</span></button>`;
     }
@@ -1232,9 +1421,14 @@ function renderTech(){
   $('#view-tech').innerHTML=h;
 }
 function renderLog(){
-  const oth=S.others.awake?` · <span style="color:var(--bad)">Others hold ${S.stars.filter(x=>x.oth).length} systems</span>`:'';
-  let h=`<div class="panel"><h2>≡ MISSION LOG</h2><div class="sub">Score: <b style="color:var(--acc)">${score()}</b> (${D().label}) · Explored: ${S.stars.filter(x=>x.explored).length}/${S.stars.length} · Fleet: ${S.bobs.length} · Colonies: ${S.colonies}/3 · Kills: ${S.stats.kills}${oth}</div>
-  <button class="btn dim" data-act="share" style="margin-top:10px">📤 Share score</button></div>`;
+  const oth=S.others.awake?` · <span style="color:var(--bad)">Others hold ${S.stars.filter(x=>x.oth).length} systems${S.hiveDead?' (leaderless)':''}</span>`:'';
+  const earned=Object.keys(S.ach||{}).length;
+  let h=`<div class="panel"><h2>≡ MISSION LOG${S.daily?` <span class="chip blue">🌌 Daily ${S.daily}</span>`:''}</h2><div class="sub">Score: <b style="color:var(--acc)">${score()}</b> (${D().label}) · Explored: ${S.stars.filter(x=>x.explored).length}/${S.stars.length} · Fleet: ${S.bobs.length} · Colonies: ${S.colonies}/3 · Kills: ${S.stats.kills}${oth}</div>
+  <button class="btn dim" data-act="share" style="margin-top:10px">📤 Share score</button></div>
+  <div class="panel"><h2>🏆 ACHIEVEMENTS — ${earned}/${ACHS.length}</h2>${ACHS.map(a=>{
+    const got=!!(S.ach&&S.ach[a.k]);
+    return `<div class="sub" style="padding:4px 0;${got?'color:var(--acc)':'opacity:.45'}">${got?'🏆':'◌'} <b>${a.n}</b> — ${a.d}</div>`;
+  }).join('')}</div>`;
   S.log.forEach(l=>{h+=`<div class="logline ${l.c}">${l.m}</div>`});
   h+=`<button class="btn dim" data-act="reset" style="margin-top:16px">⟲ Abandon mission (new game)</button>
   <div class="sub" style="margin:14px 0 30px;text-align:center">An unofficial fan game inspired by the <i>Bobiverse</i> novels by Dennis E. Taylor.<br>Go read them — they're great.</div>`;
@@ -1289,12 +1483,17 @@ function drawMap(now){
       ctx.beginPath();ctx.arc(x,y,6.5,0,7);ctx.stroke();}
     if(s.siege!=null&&pulse>0.5){ctx.strokeStyle='rgba(255,180,84,0.95)';ctx.lineWidth=2;
       ctx.beginPath();ctx.arc(x,y,14,0,7);ctx.stroke();}
+    const isHive=s.hive&&S.hiveKnown;
+    if(isHive&&!S.hiveDead){
+      ctx.strokeStyle=`rgba(255,93,108,${0.3+0.4*pulse})`;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(x,y,16+pulse*3,0,7);ctx.stroke();
+    }
     ctx.fillStyle=s.oth?'#ff5d6c':s.colony?'#6ee07a':s.explored?'#dfeefb':'#3a4d6b';
-    ctx.beginPath();ctx.arc(x,y,s.explored||s.oth?3.5:3,0,7);ctx.fill();
-    if(s.explored||s.id===selectedStar||s.alien){
-      ctx.fillStyle=s.id===S.sol?'#9fb8d4':'rgba(140,165,195,0.85)';
+    ctx.beginPath();ctx.arc(x,y,isHive?6:(s.explored||s.oth?3.5:3),0,7);ctx.fill();
+    if(s.explored||s.id===selectedStar||s.alien||isHive){
+      ctx.fillStyle=isHive&&!S.hiveDead?'#ff5d6c':s.id===S.sol?'#9fb8d4':'rgba(140,165,195,0.85)';
       ctx.font='10px -apple-system,sans-serif';ctx.textAlign='center';
-      ctx.fillText(s.name,x,y+18);
+      ctx.fillText(isHive?'THE HIVE':s.name,x,y+(isHive?22:18));
     }
   });
   S.bobs.forEach(b=>{
@@ -1342,6 +1541,8 @@ function intro(){
     label:'Launch — '+DIFFS[k].label,sub:DIFFS[k].sub,cls:k==='doom'?'bad':k==='hard'?'dim':'',
     fn:()=>{S.diff=k;save();help();return 'keep'}
   }));
+  diffBtns.push({label:'🌌 Daily Challenge',sub:"today's galaxy — identical for everyone, on Hard",cls:'blue',
+    fn:()=>{newGame('hard',dailySeed(),dailyTagStr());setTab('map');help();return 'keep'}});
   showModal('WE ARE LEGION',
    `<span class="g">// 2133. Earth is dying.</span><br><br>
    You were <b>Robert Johansson</b> — engineer, sci-fi nerd, recently deceased. You woke up 117 years later as the uploaded mind of a <b>self-replicating Von Neumann probe</b>, flung into the dark with one job:<br><br>
@@ -1357,8 +1558,8 @@ function help(){
    <b>⌬ Replicate</b> — print new Bobs. Replicative drift gives some of them real bonuses.<br><br>
    <b>⚙ Standing orders</b> — in FLEET, set Bobs to EXPLORE / EXPAND / GUARD and they act on their own.<br><br>
    <b>⚔ Know your enemy</b> — railguns shred <b>drone swarms</b>, plasma pierces <b>harvesters</b>, and <b>hunter-killers</b> just hit hard. Watch the ▲▼ hints.<br><br>
-   <b>⛒ The Others</b> — they expand forever and accelerate as you grow. They besiege colonies — and <b>if Sol falls, you lose</b>. Build 🛡 defense platforms at colonies and Sol.<br><br>
-   <b>♫ And something else is out there.</b> Listen for it.<br><br>
+   <b>⛒ The Others</b> — they expand forever and accelerate as you grow. They besiege colonies — and <b>if Sol falls, you lose</b>. Build 🛡 defense platforms at colonies and Sol. Somewhere out there is their <b>HIVE</b> — find it, gather your Bobs in one system, and destroy it to end the war for good. Bobs in the same system <b>fight as a fleet</b>.<br><br>
+   <b>♫ And something else is out there.</b> Listen for it. (Something nastier is out there too. He has a name.)<br><br>
    <b>⌂ Win</b> — colonies on 3 🌍 garden worlds. Restart anytime with ⟲.<br><br>
    <span class="g">♫ toggles the ambient soundtrack (it darkens when things go wrong — listen). ♪ toggles sound effects. Autosaves on this device; the fleet keeps working up to an hour while you're away. GUPPI out.</span>`,
    [{label:'Understood'}]);
@@ -1387,6 +1588,7 @@ document.addEventListener('click',e=>{
     case 'scan':doScan();break;
     case 'repl':doReplicate();break;
     case 'colony':doColony();break;
+    case 'terra':doTerra();break;
     case 'defense':doDefense();break;
     case 'engage':{const b=activeBob(),s=ST(b.sys);if(s.host>0&&b.status==='idle')startCombat(b,s,false);break;}
     case 'buy':buyTech(v);break;
