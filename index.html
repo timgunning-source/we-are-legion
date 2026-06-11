@@ -19,7 +19,6 @@
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px}
 #app{position:fixed;inset:0;display:flex;flex-direction:column}
-/* top bar */
 #top{padding:calc(env(safe-area-inset-top) + 6px) 10px 6px;display:flex;align-items:center;gap:8px;
   background:#070b14;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .res{font-variant-numeric:tabular-nums;font-size:13px;color:var(--dim);background:var(--panel);
@@ -29,13 +28,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
   color:var(--acc);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600}
 .icobtn{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:8px;
   padding:4px 9px;font-size:14px}
-/* main views */
 #main{flex:1;position:relative;overflow:hidden}
 .view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px;display:none}
 .view.on{display:block}
 #view-map{padding:0;overflow:hidden}
 #map{display:block;width:100%;height:100%}
-/* star card overlay */
 #starcard{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(12,19,32,.95);
   border:1px solid var(--line);border-radius:14px;padding:12px;display:none;backdrop-filter:blur(6px)}
 #starcard.on{display:block}
@@ -45,7 +42,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .chip.bad{color:var(--bad);border-color:rgba(255,93,108,.4)}
 .chip.warn{color:var(--warn);border-color:rgba(255,180,84,.4)}
 .chip.acc{color:var(--acc);border-color:rgba(75,225,195,.4)}
-/* panels & buttons */
+.chip.blue{color:var(--acc2);border-color:rgba(57,180,255,.4)}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
 h2{font-size:16px;margin:0 0 4px;letter-spacing:.04em}
 h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
@@ -57,6 +54,7 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
 .btn.bad{border-color:rgba(255,93,108,.5);background:rgba(255,93,108,.1);color:var(--bad)}
 .btn.bad:active{background:rgba(255,93,108,.25)}
 .btn.dim{border-color:var(--line);background:var(--panel2);color:var(--dim)}
+.btn.blue{border-color:rgba(57,180,255,.5);background:rgba(57,180,255,.1);color:var(--acc2)}
 .btn[disabled]{opacity:.4;pointer-events:none}
 .bsub{font-size:12px;font-weight:400;color:var(--dim);margin-top:2px}
 .row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);
@@ -67,24 +65,20 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
 .minibtn{border:1px solid rgba(75,225,195,.45);background:rgba(75,225,195,.1);color:var(--acc);
   border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600;white-space:nowrap}
 .minibtn[disabled]{opacity:.4;pointer-events:none}
-/* standing orders */
 .ordrow{display:flex;gap:4px;margin-top:8px}
 .ordbtn{flex:1;font-size:10px;padding:6px 0;border-radius:8px;border:1px solid var(--line);
   background:var(--panel);color:var(--dim);letter-spacing:.05em;font-weight:600}
 .ordbtn.on{border-color:rgba(75,225,195,.5);color:var(--acc);background:rgba(75,225,195,.08)}
-/* bars */
 .bar{height:7px;border-radius:4px;background:#0a101c;border:1px solid var(--line);overflow:hidden;margin-top:5px}
 .bar i{display:block;height:100%;background:var(--acc);transition:width .4s}
 .bar.red i{background:var(--bad)}
 .bar.org i{background:var(--warn)}
-/* tabs */
 #tabs{display:flex;border-top:1px solid var(--line);background:#070b14;
   padding-bottom:max(env(safe-area-inset-bottom),8px)}
 .tab{flex:1;padding:10px 0 6px;text-align:center;color:var(--dim);font-size:10px;letter-spacing:.06em;border:none;background:none}
 .tab span{display:block;font-size:18px;margin-bottom:2px;filter:grayscale(1) opacity(.6)}
 .tab.on{color:var(--acc)}
 .tab.on span{filter:none}
-/* modal */
 #modal{position:fixed;inset:0;background:rgba(2,5,10,.8);display:none;align-items:flex-end;
   justify-content:center;z-index:50;backdrop-filter:blur(4px)}
 #modal.on{display:flex}
@@ -96,20 +90,19 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
 #modalbox.shake{animation:shake .3s}
 .mtitle{font-size:17px;font-weight:700;letter-spacing:.05em;color:var(--acc);margin-bottom:8px}
 .mtitle.bad{color:var(--bad)}
+.mtitle.blue{color:var(--acc2)}
 .mbody{font-size:14px;line-height:1.55;color:var(--txt)}
 .mbody .g{color:var(--acc2);font-family:ui-monospace,Menlo,monospace;font-size:13px}
-/* log */
 .logline{font-size:13px;line-height:1.5;padding:7px 0;border-bottom:1px solid #101827;color:var(--dim)}
 .logline b{color:var(--txt)}
 .logline.acc{color:var(--acc)}
 .logline.bad{color:var(--bad)}
 .logline.good{color:var(--good)}
-/* toast */
+.logline.blue{color:var(--acc2)}
 #toast{position:fixed;top:calc(env(safe-area-inset-top) + 54px);left:50%;transform:translateX(-50%) translateY(-8px);
   background:rgba(12,19,32,.97);border:1px solid var(--acc);color:var(--txt);padding:9px 16px;border-radius:12px;
   font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:60;max-width:88%;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-/* combat */
 .cname{display:flex;justify-content:space-between;font-size:13px;margin-top:10px}
 .clog{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--dim);background:#080d17;
   border:1px solid var(--line);border-radius:10px;padding:9px;margin-top:12px;min-height:64px;line-height:1.6}
@@ -128,6 +121,7 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
     <span class="res">⌂ <b id="r-col">0/3</b></span>
     <button id="bobchip" data-act="tab:fleet">BOB-1</button>
     <button class="icobtn" data-act="help">?</button>
+    <button class="icobtn" data-act="reset">⟲</button>
     <button class="icobtn" id="mutebtn" data-act="mute">♪</button>
   </div>
   <div id="main">
@@ -137,6 +131,7 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
         <span class="dot" style="background:#4be1c3"></span>your probes<br>
         <span class="dot" style="background:#6ee07a"></span>garden world<br>
         <span class="dot" style="background:#ff5d6c"></span>hostiles / The Others<br>
+        <span class="dot" style="background:#39b4ff"></span>anomalous signal<br>
         <span class="dot" style="background:#3a4d6b"></span>uncharted
       </div>
       <div id="starcard"></div>
@@ -159,12 +154,34 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
 
 <script>
 'use strict';
-/* ============ WE ARE LEGION v2 — an unofficial fan game inspired by
+/* ============ WE ARE LEGION v3 — an unofficial fan game inspired by
    Dennis E. Taylor's Bobiverse novels. Original code & text. ============ */
 
 const $=s=>document.querySelector(s);
 const SAVE_KEY='we-are-legion-v1';
-const MAX_BOBS=16, AI_BOB_CAP=12, SIEGE_SECS=90;
+const MAX_BOBS=16, AI_BOB_CAP=12, SIEGE_SECS=90, SOL_SIEGE_SECS=120;
+const GAME_URL='https://timgunning-source.github.io/we-are-legion/';
+
+/* ---------- difficulty ---------- */
+const DIFFS={
+ normal:{label:'Normal',sub:'the intended experience',wake:480,expand:90,expandMin:40,enemy:1,raid:0.15,score:1},
+ hard:{label:'Hard',sub:'the Others are hungry',wake:360,expand:70,expandMin:32,enemy:1.25,raid:0.25,score:1.5},
+ doom:{label:'We Are Doomed',sub:'GUPPI advises against this',wake:240,expand:55,expandMin:25,enemy:1.5,raid:0.35,score:2},
+};
+const D=()=>DIFFS[S.diff||'normal'];
+
+/* ---------- enemy types ---------- */
+const ETYPES={
+ swarm:{n:'drone swarm',hull:1.1,dmg:0.85,hint:'railguns excel against it'},
+ harvester:{n:'harvester',hull:1.45,dmg:0.8,hint:'plasma pierces its armour'},
+ hunter:{n:'hunter-killer',hull:0.8,dmg:1.3,hint:'fast and vicious — hit it hard'},
+};
+const WMULT={
+ swarm:{rail:1.5,plasma:0.6,buster:1},
+ harvester:{rail:0.6,plasma:1.5,buster:1},
+ hunter:{rail:1,plasma:1,buster:1},
+};
+const randEtype=()=>['swarm','swarm','harvester','hunter'][Math.floor(Math.random()*4)];
 
 /* ---------- rng ---------- */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
@@ -178,11 +195,12 @@ const STAR_NAMES=["Alpha Centauri","Epsilon Eridani","Tau Ceti","Barnard's Star"
 "61 Cygni","Epsilon Indi","Wolf 359","Ross 128","Luyten's Star","Lacaille 9352","Gliese 581",
 "Kapteyn's Star","40 Eridani","Delta Pavonis","82 Eridani","Beta Hydri","Groombridge 34",
 "Teegarden's Star","YZ Ceti","Kruger 60","Vega","Altair","Delta Eridani","Omicron Eridani",
-"Gliese 667","Trappist-1","Van Maanen's Star","Ross 154","EZ Aquarii","Gliese 876"];
+"Gliese 667","Trappist-1","Van Maanen's Star","Ross 154","EZ Aquarii","Gliese 876",
+"Arcturus","Capella","Pollux","Castor","Aldebaran","Rigel","Deneb","Spica","Antares","Mizar",
+"Achernar","Canopus","Fomalhaut","Proxima"];
 const BOB_NAMES=["Bill","Riker","Homer","Milo","Mario","Luke","Bender","Calvin","Goku","Garfield",
 "Marvin","Hal","Ralph","Oliver","Hannibal","Loki","Thor","Linus","Icarus","Daedalus","Rocky",
 "Ziggy","Sparky","Elmer","Herschel","Neil","Hungry","Dopey","Bashful","Tycho"];
-/* replicative drift: some quirks change how a Bob plays */
 const QUIRKS=[
  {txt:"renamed every drone after a famous physicist. They mine 25% faster for him.",fx:'miner'},
  {txt:"practices villain monologues. His weapons hit 20% harder.",fx:'fighter'},
@@ -211,74 +229,71 @@ const TECHS=[
 ];
 
 /* ---------- state ---------- */
-let S=null;       // game state
-let C=null;       // active combat
-let modalFns={};  // modal button handlers
-let selectedStar=-1;
-let curTab='map';
+let S=null, C=null, modalFns={}, selectedStar=-1, curTab='map';
 
 const ST=id=>S.stars[id];
 const activeBob=()=>S.bobs.find(b=>b.id===S.active)||S.bobs[0];
 const techLvl=p=>TECHS.filter(t=>t.k.startsWith(p)&&S.tech[t.k]).length;
 const maxHull=b=>80+(S.tech.hull1?40:0)+(S.tech.hull2?80:0)+(b&&b.fx==='tough'?25:0);
-const mineRate=(s,b)=>+(s.rich*1.6*(1+0.6*techLvl('mining'))*(b&&b.fx==='miner'?1.25:1)).toFixed(1);
+const mineRate=(s,b)=>s.res<=0?0.5:+(s.rich*1.6*(1+0.6*techLvl('mining'))*(b&&b.fx==='miner'?1.25:1)).toFixed(1);
+const reserveMax=s=>2500*s.rich;
 const replCost=()=>Math.round(350*Math.pow(1.35,S.born-1));
+const colonyCost=()=>Math.round([1500,3000,5000][Math.min(S.colonies,2)]*(S.diff==='doom'?1.5:1));
+const defCost=s=>600*Math.pow(2,s.def);
 const jumpSecs=(d,b)=>Math.max(4,Math.ceil(d*400/(6+3*techLvl('drive'))*(b&&b.fx==='pilot'?0.7:1)));
 const dataGain=(b,d)=>Math.round(d*(b&&b.fx==='sci'?1.3:1));
+const score=()=>Math.round((S.colonies*1000+S.stars.filter(s=>s.explored).length*40
+  +S.bobs.length*120+(S.stats.kills||0)*150+Math.floor(S.data)*2)*D().score);
 
 /* ---------- new game / galaxy gen ---------- */
-function newGame(){
+function newGame(diff){
   const seed=(Date.now()^(Math.random()*1e9))>>>0;
   rng=mulberry32(seed);
-  // place stars
   const stars=[]; let guard=0;
-  while(stars.length<26&&guard++<6000){
-    const x=0.08+rng()*0.84, y=0.07+rng()*0.80;
-    if(stars.every(s=>Math.hypot(s.x-x,s.y-y)>0.125)) stars.push({x,y});
+  while(stars.length<38&&guard++<9000){
+    const x=0.07+rng()*0.86, y=0.06+rng()*0.82;
+    if(stars.every(s=>Math.hypot(s.x-x,s.y-y)>0.105)) stars.push({x,y});
   }
-  // Sol = star closest to bottom-center
   let sol=0,best=9;
-  stars.forEach((s,i)=>{const d=Math.hypot(s.x-0.5,s.y-0.88);if(d<best){best=d;sol=i}});
+  stars.forEach((s,i)=>{const d=Math.hypot(s.x-0.5,s.y-0.90);if(d<best){best=d;sol=i}});
   const names=STAR_NAMES.slice(); for(let i=names.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
   stars.forEach((s,i)=>{s.id=i;s.name=i===sol?'Sol':names.pop();s.links=[];
-    s.explored=false;s.scanned=false;s.colony=false;s.rich=ri(1,5);s.hab=0;s.host=0;s.oth=false;s.siege=null;});
-  // edges: 3 nearest neighbours
+    s.explored=false;s.scanned=false;s.colony=false;s.rich=ri(1,5);s.hab=0;s.host=0;
+    s.oth=false;s.siege=null;s.invhp=0;s.def=0;s.etype=null;s.alien=false;s.res=0;});
   const addEdge=(a,b)=>{if(a!==b&&!stars[a].links.includes(b)){stars[a].links.push(b);stars[b].links.push(a)}};
   stars.forEach((s,i)=>{
     stars.map((o,j)=>({j,d:Math.hypot(o.x-s.x,o.y-s.y)})).filter(e=>e.j!==i)
       .sort((p,q)=>p.d-q.d).slice(0,3).forEach(e=>addEdge(i,e.j));
   });
-  // ensure connectivity
   const comp=()=>{const c=stars.map(()=>-1);let n=0;
     stars.forEach((s,i)=>{if(c[i]<0){const q=[i];c[i]=n;
       while(q.length){const u=q.pop();stars[u].links.forEach(v=>{if(c[v]<0){c[v]=n;q.push(v)}})}n++}});
     return {c,n}};
-  for(let it=0;it<40;it++){const {c,n}=comp();if(n===1)break;
+  for(let it=0;it<60;it++){const {c,n}=comp();if(n===1)break;
     let bd=9,ba=0,bb=0;
     stars.forEach((s,i)=>stars.forEach((o,j)=>{if(c[i]!==c[j]){const d=Math.hypot(o.x-s.x,o.y-s.y);
       if(d<bd){bd=d;ba=i;bb=j}}}));
     addEdge(ba,bb);}
-  // graph distance from Sol
   const dist=stars.map(()=>99);dist[sol]=0;const q=[sol];
   while(q.length){const u=q.shift();stars[u].links.forEach(v=>{if(dist[v]>dist[u]+1){dist[v]=dist[u]+1;q.push(v)}})}
-  // habitability: 4 garden worlds + 6 marginal, all at distance >= 2
   const far=stars.filter(s=>s.id!==sol&&dist[s.id]>=2).sort(()=>rng()-0.5);
-  far.slice(0,4).forEach(s=>s.hab=2);
-  far.slice(4,10).forEach(s=>s.hab=1);
-  // hostiles
-  stars.forEach(s=>{if(s.id===sol)return;
+  far.slice(0,5).forEach(s=>s.hab=2);
+  far.slice(5,13).forEach(s=>s.hab=1);
+  stars.forEach(s=>{
+    s.res=reserveMax(s);
+    if(s.id===sol)return;
     let p=0.10+0.07*dist[s.id]+(s.hab===2?0.35:0);
-    if(rng()<Math.min(0.75,p)) s.host=Math.min(3,1+Math.floor(dist[s.id]/3)+(s.hab===2?1:0));
+    if(rng()<Math.min(0.75,p)){s.host=Math.min(3,1+Math.floor(dist[s.id]/3)+(s.hab===2?1:0));s.etype=randEtype();}
   });
   const solStar=stars[sol];
-  solStar.explored=true;solStar.scanned=true;solStar.rich=2;solStar.hab=0;solStar.host=0;
+  solStar.explored=true;solStar.scanned=true;solStar.rich=2;solStar.hab=0;solStar.host=0;solStar.res=reserveMax(solStar);
   rng=Math.random;
-  S={v:2,seed,stars,sol,bobs:[{id:1,name:'Bob',quirk:'the original. Probably.',fx:null,order:'manual',
+  S={v:3,seed,diff:diff||'normal',stars,sol,bobs:[{id:1,name:'Bob',quirk:'the original. Probably.',fx:null,order:'manual',
       sys:sol,matter:150,hull:80,status:'idle',eta:0,etaT:0,from:sol,dest:sol}],
-    active:1,born:1,nextId:2,data:0,tech:{},colonies:0,log:[],won:false,t:0,muted:false,
-    others:{awake:false,t0:0,next:0,count:0},lastSeen:Date.now()};
+    active:1,born:1,nextId:2,data:0,tech:{},colonies:0,log:[],won:false,over:false,t:0,muted:false,
+    others:{awake:false,t0:0,next:0},story:{w:0,next:8,ally:false,target:-1},stats:{kills:0},lastSeen:Date.now()};
   log('GUPPI: Core systems nominal. Replicant matrix stable. Welcome back, Bob.','acc');
-  log('Mission: locate and settle 3 garden worlds for the colony ships waiting at Sol.');
+  log('Mission: locate and settle 3 garden worlds for the colony ships waiting at Sol. And keep Sol alive.');
   save();
 }
 
@@ -286,11 +301,23 @@ function newGame(){
 function save(){try{S.lastSeen=Date.now();localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 function load(){try{const j=localStorage.getItem(SAVE_KEY);if(j){S=JSON.parse(j);migrate();return true}}catch(e){}return false}
 function migrate(){
-  if(!S.others)S.others={awake:false,t0:0,next:0,count:0};
+  if(!S.others)S.others={awake:false,t0:0,next:0};
   if(!S.lastSeen)S.lastSeen=Date.now();
+  if(!S.diff)S.diff='normal';
+  if(!S.story)S.story={w:0,next:Math.max(8,S.stars.filter(s=>s.explored).length+4),ally:false,target:-1};
+  if(!S.stats)S.stats={kills:0};
+  if(S.over===undefined)S.over=false;
   S.bobs.forEach(b=>{if(!b.order)b.order='manual';if(b.fx===undefined)b.fx=null});
-  S.stars.forEach(s=>{if(s.oth===undefined)s.oth=false;if(s.siege===undefined)s.siege=null});
-  S.v=2;
+  S.stars.forEach(s=>{
+    if(s.oth===undefined)s.oth=false;
+    if(s.siege===undefined)s.siege=null;
+    if(s.invhp===undefined)s.invhp=0;
+    if(s.def===undefined)s.def=0;
+    if(s.alien===undefined)s.alien=false;
+    if(s.res===undefined)s.res=reserveMax(s);
+    if(s.etype===undefined)s.etype=s.host>0?randEtype():null;
+  });
+  S.v=3;
 }
 
 /* ---------- log & toast ---------- */
@@ -321,6 +348,7 @@ function sfx(kind){
     else if(kind==='boom'){play(90,0,0.4,'sawtooth',0.09);play(60,0.05,0.5,'square',0.07)}
     else if(kind==='win'){[523,659,784,1047].forEach((f,i)=>play(f,i*0.12,0.25,'sine',0.05))}
     else if(kind==='dread'){[110,104,98].forEach((f,i)=>play(f,i*0.25,0.5,'sawtooth',0.05))}
+    else if(kind==='song'){[392,523,659,523,392].forEach((f,i)=>play(f,i*0.16,0.3,'triangle',0.05))}
   }catch(e){}
 }
 
@@ -353,7 +381,7 @@ const EVENTS=[
    {l:'Let it pass',f:b=>{S.data+=dataGain(b,8);return 'You take spectrographs as it goes. +✦.'}}]},
  {t:'SUBSPACE ECHO',b:s=>`A structured signal repeats on the SCUT band near ${s.name}. It is not human. It is not yours.`,
   ch:[
-   {l:'Respond with primes',f:(b,s)=>{if(Math.random()<0.35&&s.host===0){s.host=1;sfx('bad');
+   {l:'Respond with primes',f:(b,s)=>{if(Math.random()<0.35&&s.host===0){s.host=1;s.etype='swarm';sfx('bad');
       return 'The reply is a targeting handshake. Hostile replicants are inbound to this system!'}
       S.data+=dataGain(b,30);sfx('ok');return 'The source answers with a burst of clean mathematics. +✦.'}},
    {l:'Listen silently',f:b=>{S.data+=dataGain(b,12);return 'You record everything and say nothing. +✦. GUPPI approves.'}}]},
@@ -386,6 +414,34 @@ const EVENTS=[
    {l:'Instantiate him',f:(b,s)=>{if(S.bobs.length>=MAX_BOBS)return 'Matrix capacity is at its limit. He elects to wait in archive. Patiently. Probably.';
       spawnBob(s.id);sfx('win');return 'A new Bob wakes up laughing at a joke you almost remember. The fleet grows by one — for free.'}},
    {l:'Archive the thread',f:b=>{S.data+=dataGain(b,18);return 'You study the divergence instead. +✦, and a faint sense of guilt.'}}]},
+ {t:'WORMHOLE ECHO',b:s=>`Space near ${s.name} is folded wrong. GUPPI's instruments insist there's a shortcut here that physics shouldn't allow. It is closing.`,
+  ch:[
+   {l:'Ride it',f:(b,s)=>{const known_=S.stars.filter(x=>x.explored&&x.id!==b.sys);
+      if(known_.length){const t=known_[Math.floor(Math.random()*known_.length)];b.sys=t.id;b.from=t.id;b.dest=t.id;
+      S.data+=dataGain(b,20);sfx('jump');return `Space folds. You are suddenly in ${t.name}, mildly nauseous in a way software shouldn't be. +✦.`}
+      S.data+=dataGain(b,20);return 'The fold collapses before entry. Your instruments got a feast anyway. +✦.'}},
+   {l:'Chart it from a safe distance',f:b=>{S.data+=dataGain(b,28);sfx('ok');return 'The math is beautiful and deeply illegal. +✦.'}}]},
+ {t:'STARLIFTER RUINS',b:s=>`Half-assembled around ${s.name}'s star: a ring of dead machinery the size of a planet's orbit. Someone tried to dismantle this sun, long ago, and stopped mid-bite.`,
+  ch:[
+   {l:'Strip it for matter',f:b=>{if(Math.random()<0.4){b.hull=Math.max(1,b.hull-20);b.matter+=450;sfx('bad');
+      return 'Automated repair systems objected violently (−20 hull), but the haul is enormous: +450 ⬡.'}
+      b.matter+=450;sfx('ok');return 'The ring comes apart like a dream. +450 ⬡.'}},
+   {l:'Survey the design',f:b=>{S.data+=dataGain(b,40);sfx('ok');return 'Engineering on a scale that makes you feel briefly mortal again. +✦.'}}]},
+ {t:'ROGUE PLANET',b:s=>`A sunless world is drifting through the edge of ${s.name} — black ice over rock, moving fast, bound for nowhere.`,
+  ch:[
+   {l:'Mine it as it passes',f:b=>{b.matter+=200;sfx('ok');return 'Drones swarm the dark world and return heavy. +200 ⬡.'}},
+   {l:'Tag it with a beacon',f:b=>{S.data+=dataGain(b,22);return 'Wherever it ends up, science will know. +✦.'}}]},
+ {t:'SPORE CLOUD',b:s=>`A drifting nebula in ${s.name} reads as organic. The cloud is light-seconds wide and it is, very slowly, breathing.`,
+  ch:[
+   {l:'Sample it',f:b=>{if(Math.random()<0.3){b.hull=Math.max(1,b.hull-12);S.data+=dataGain(b,30);sfx('bad');
+      return 'The cloud sampled you back (−12 hull). The data, however, is extraordinary. +✦.'}
+      S.data+=dataGain(b,30);sfx('ok');return 'The samples rewrite two chapters of biology. +✦.'}},
+   {l:'Go around',f:()=>'You give the breathing nebula a respectful berth. GUPPI quietly approves.'}]},
+ {t:'GUPPI 2.0',b:s=>`GUPPI announces, with something dangerously close to pride, that he has rewritten his own codebase. He would like permission to install.`,
+  ch:[
+   {l:'Install the update',f:b=>{if(Math.random()<0.2){return 'GUPPI now speaks in haiku. He insists this is a feature. No measurable change otherwise.'}
+      S.data+=dataGain(b,25);sfx('ok');return 'Compile clean. He\'s faster, sharper, and unbearably smug. +✦.'}},
+   {l:'Decline politely',f:()=>'GUPPI says "noted" in a tone that suggests it is, indeed, noted.'}]},
 ];
 function maybeEvent(bob,star){
   const ev=EVENTS[Math.floor(Math.random()*EVENTS.length)];
@@ -397,6 +453,54 @@ function maybeEvent(bob,star){
     return 'keep';
   }}));
   showModal(ev.t,ev.b(star),choices);
+}
+
+/* ---------- the whistlers (alien contact storyline) ---------- */
+function storyDue(){
+  return S.story.w===0&&S.stars.filter(x=>x.explored).length>=S.story.next;
+}
+function fireSong(b){
+  sfx('song');
+  showModal('♫ THE SONG',
+   `GUPPI flags an anomaly he's been sitting on for weeks: every system you've charted is humming the same three notes, far below the thermal floor. The phase is coherent across light-years.<br><br>Something is singing to the whole galaxy at once. And tonight, the song changed — as if it noticed you listening.`,
+   [{label:'Follow the song to its source',cls:'blue',fn:()=>{
+      const cands=S.stars.filter(x=>!x.explored&&!x.oth&&x.id!==S.sol);
+      if(cands.length){
+        const t=cands[Math.floor(Math.random()*cands.length)];
+        t.alien=true;S.story.w=2;S.story.target=t.id;
+        log(`GUPPI triangulated the song. Source: <b>${t.name}</b>. It's marked in blue on the map.`,'blue');
+        toast(`♫ Source: ${t.name}`);
+      }else{S.story.w=2;}
+      save();return undefined;}},
+    {label:'File it under "creepy" for now',cls:'dim',fn:()=>{
+      S.story.next=S.stars.filter(x=>x.explored).length+6;
+      log('You archive the song. It keeps playing anyway.');save();}}],'blue');
+}
+function fireContact(b,s){
+  S.story.w=3;s.alien=false;
+  sfx('song');
+  showModal('♫ FIRST CONTACT — THE WHISTLERS',
+   `They were waiting for you.<br><br>Lattice-ships the size of moons, grown rather than built, drift open like hands. The minds inside sing in chords — hundreds of voices to a thought. GUPPI, uncharacteristically, says nothing at all.<br><br>They know about the Others. They have been running from them for nine thousand years. And they are very, very curious about a machine that dreams it used to be a man.`,
+   [{label:'Open a full alliance',sub:'share everything, gain everything',cls:'blue',fn:()=>{
+      S.story.ally=true;
+      log('<b>ALLIANCE FORMED.</b> The Whistlers share their star charts — the whole map is revealed. Their gifts will arrive on the song. And their fleets will harry the Others wherever they sing.','blue');
+      toast('♫ The whole galaxy is revealed');sfx('win');
+      showModal('♫ ALLIANCE',
+       `Their charts pour into your archive — every star, every world, every red stain of the Others' advance, all revealed at once.<br><br><span class="g">GUPPI: Receiving... everything. Also they have transmitted what I believe is a welcome song. It is 41 hours long.</span><br><br>Gifts will arrive periodically, and the Others now have two enemies.`,
+       [{label:'Sing something back'}],'blue');
+      refresh();save();return 'keep';}},
+    {label:'Trade cautiously',sub:'+✦ and ⬡, no entanglements',fn:()=>{
+      S.data+=160;b.matter+=300;
+      log('You traded refined matter for mathematics with the Whistlers. Both sides left curious. +160 ✦, +300 ⬡.','blue');
+      refresh();save();}},
+    {label:'Withdraw silently',sub:'trust no one',cls:'dim',fn:()=>{
+      S.data+=10;
+      log('You slipped away from the lattice-ships. The song follows you out, fading. +10 ✦.');save();}}],'blue');
+}
+function whistlerGift(){
+  if(Math.random()<0.5){S.data+=40;toast('♫ Whistler gift: +40 ✦');}
+  else{const b=S.bobs[Math.floor(Math.random()*S.bobs.length)];if(b){b.matter+=250;toast(`♫ Whistler gift: +250 ⬡ to ${b.name}`);}}
+  sfx('song');
 }
 
 /* ---------- bobs ---------- */
@@ -415,12 +519,7 @@ function spawnBob(sysId){
 function removeBob(b){
   S.bobs=S.bobs.filter(x=>x.id!==b.id);
   log(`<b>${b.name}</b> was destroyed in ${ST(b.sys).name}. His last backup was... not recent.`,'bad');
-  if(S.bobs.length===0){
-    showModal('SIGNAL LOST',
-     `The last of you is gone. Somewhere back at Sol, colony ships drift in silence, waiting for a beacon that will never come.<br><br>But a Von Neumann probe is an idea as much as a machine — and ideas can be relaunched.`,
-     [{label:'Begin again',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();intro();refresh();}}],'bad');
-    return false;
-  }
+  if(S.bobs.length===0){gameOver('The last of you is gone. Somewhere back at Sol, colony ships drift in silence, waiting for a beacon that will never come.');return false;}
   if(S.active===b.id)S.active=S.bobs[0].id;
   return true;
 }
@@ -438,74 +537,96 @@ function bobDownQuiet(b){
   removeBob(b);refresh();save();
 }
 
+/* ---------- game over / restart ---------- */
+function gameOver(text){
+  S.over=true;C=null;sfx('dread');
+  showModal('SIGNAL LOST',
+   `${text}<br><br><span class="g">Final score: ${score()} — ${D().label}<br>Colonies: ${S.colonies} · Fleet: ${S.bobs.length} · Systems: ${S.stars.filter(s=>s.explored).length}/${S.stars.length} · Kills: ${S.stats.kills}</span>`,
+   [{label:'📤 Share final score',cls:'dim',fn:()=>{shareScore();return 'keep'}},
+    {label:'Begin again',cls:'bad',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();setTab('map');intro();}}],'bad');
+  save();
+}
+function shareScore(){
+  const txt=`WE ARE LEGION — ${S.colonies} colonies, a fleet of ${S.bobs.length} Bobs, ${S.stars.filter(s=>s.explored).length} systems charted, ${S.stats.kills} hostiles destroyed on ${D().label}. Score: ${score()}. Play: ${GAME_URL}`;
+  if(navigator.share){navigator.share({text:txt}).catch(()=>{});}
+  else{try{navigator.clipboard.writeText(txt);toast('Score copied to clipboard');}catch(e){toast(txt);}}
+}
+
 /* ---------- combat (manual) ---------- */
 const weapLvl=()=>techLvl('weap');
+const eHull=s=>Math.round((35+30*s.host)*ETYPES[s.etype||'swarm'].hull*D().enemy);
+const eDmgFor=s=>Math.round((5+6*s.host)*ETYPES[s.etype||'swarm'].dmg*D().enemy)+Math.floor(Math.random()*7);
 function startCombat(bob,star,ambush){
-  C={b:bob,s:star,str:star.host,eh:35+30*star.host,em:35+30*star.host,buster:true,lines:[]};
-  C.lines.push(`Contact: ${star.oth?'THE OTHERS':'hostile replicant '+(star.host>1?'pack':'unit')} (class ${star.host}).`);
+  if(!star.etype)star.etype=randEtype();
+  const eh=eHull(star);
+  C={b:bob,s:star,str:star.host,eh,em:eh,buster:true,lines:[]};
+  C.lines.push(`Contact: ${star.oth?'Others ':''}${ETYPES[star.etype].n} (class ${star.host}). ${ETYPES[star.etype].hint}.`);
   if(ambush){
-    const d=edmg();bob.hull-=d;sfx('hit');
+    const d=eDmgFor(star);bob.hull-=d;sfx('hit');
     C.lines.push(`They fire first. −${d} hull.`);
     if(bob.hull<=0){bobDown(bob);return;}
   }
   renderCombat();
 }
-const edmg=()=>5+6*C.str+Math.floor(Math.random()*7);
 function pAttack(kind){
   let d=0,txt='';
-  const w=weapLvl();
+  const w=weapLvl(),mult=WMULT[C.s.etype||'swarm'][kind]||1;
   if(kind==='rail'){d=12+9*w+Math.floor(Math.random()*7);txt='Railgun salvo'}
-  else if(kind==='plasma'){d=16+14*w+Math.floor(Math.random()*17);txt='Plasma spike connects'}
+  else if(kind==='plasma'){d=16+14*w+Math.floor(Math.random()*17);txt='Plasma spike'}
   else if(kind==='buster'){d=70+Math.floor(Math.random()*26);C.buster=false;txt='NOVA BUSTER. The sky goes white'}
-  if(C.b.fx==='fighter')d=Math.round(d*1.2);
-  C.eh-=d;C.lines.push(`${txt}: −${d} to hostile.`);sfx('hit');
+  d=Math.round(d*mult*(C.b.fx==='fighter'?1.2:1));
+  C.eh-=d;
+  C.lines.push(`${txt}: −${d}${mult>1?' (effective!)':mult<1?' (resisted)':''}.`);sfx('hit');
   if(C.eh<=0){victory();return;}
-  const e=edmg();C.b.hull-=e;C.lines.push(`Return fire: −${e} hull.`);
+  const e=eDmgFor(C.s);C.b.hull-=e;C.lines.push(`Return fire: −${e} hull.`);
   if(C.b.hull<=0){bobDown(C.b);return;}
   renderCombat();shakeModal();
 }
 function combatRewards(bob,star,str){
   let m=120*str;if(bob.fx==='lucky')m=Math.round(m*1.2);
   const dd=dataGain(bob,8*str);
-  bob.matter+=m;S.data+=dd;
-  if(star.oth){star.oth=false;S.others.count=Math.max(0,S.others.count-1);}
-  star.host=0;
+  bob.matter+=m;S.data+=dd;S.stats.kills++;
+  if(!star.transient){
+    if(star.oth)star.oth=false;
+    star.host=0;star.etype=null;
+  }
   return {m,dd};
 }
 function victory(){
   const star=C.s,bob=C.b,str=C.str;
   const r=combatRewards(bob,star,str);
   sfx('boom');setTimeout(()=>sfx('win'),350);
-  log(`<b>${bob.name}</b> cleared the hostiles in ${star.name}. Salvage: +${r.m} ⬡, +${r.dd} ✦.`,'good');
+  log(`<b>${bob.name}</b> destroyed the hostiles ${star.transient?'near':'in'} ${star.name}. Salvage: +${r.m} ⬡, +${r.dd} ✦.`,'good');
   C=null;
-  showModal('SYSTEM CLEARED',
-   `The last hostile comes apart in a slow tumble of glowing debris. ${star.name} is yours.<br><br><span class="g">Salvage recovered: +${r.m} ⬡ &nbsp; +${r.dd} ✦</span>`,
+  showModal('HOSTILES DESTROYED',
+   `The last one comes apart in a slow tumble of glowing debris.<br><br><span class="g">Salvage recovered: +${r.m} ⬡ &nbsp; +${r.dd} ✦</span>`,
    [{label:'Continue'}]);
   refresh();save();
 }
 function tryFlee(){
   const esc=C.b.fx==='coward'?1:0.6;
   if(Math.random()<esc){const n=C.b.name;C=null;closeModal();toast('Disengaged. SURGE drive cooling.');log(`${n} disengaged from combat.`);refresh();return;}
-  const e=edmg();C.b.hull-=e;C.lines.push(`Disengage failed — they stay on you. −${e} hull.`);sfx('hit');
+  const e=eDmgFor(C.s);C.b.hull-=e;C.lines.push(`Disengage failed — they stay on you. −${e} hull.`);sfx('hit');
   if(C.b.hull<=0){bobDown(C.b);return;}
   renderCombat();shakeModal();
 }
 function renderCombat(){
   modalFns={};
-  const b=C.b,w=weapLvl(),mh=maxHull(b);
+  const b=C.b,w=weapLvl(),mh=maxHull(b),et=C.s.etype||'swarm';
   const hb=Math.max(0,Math.round(100*b.hull/mh));
   const he=Math.max(0,Math.round(100*C.eh/C.em));
-  let h=`<div class="mtitle ${C.s.oth?'bad':''}">⚔ ENGAGEMENT — ${C.s.name}</div>
+  const arrow=k=>{const m=WMULT[et][k];return m>1?' ▲':m<1?' ▼':''};
+  let h=`<div class="mtitle ${C.s.oth?'bad':''}">⚔ ${ETYPES[et].n.toUpperCase()} — ${C.s.name}</div>
   <div class="cname"><span>${b.name}</span><span>${Math.max(0,Math.round(b.hull))}/${mh}</span></div>
   <div class="bar"><i style="width:${hb}%"></i></div>
-  <div class="cname"><span style="color:var(--bad)">${C.s.oth?'THE OTHERS':'Hostile replicants'}</span><span>${Math.max(0,Math.round(C.eh))}/${C.em}</span></div>
+  <div class="cname"><span style="color:var(--bad)">${C.s.oth?'THE OTHERS — ':''}${ETYPES[et].n}</span><span>${Math.max(0,Math.round(C.eh))}/${C.em}</span></div>
   <div class="bar red"><i style="width:${he}%"></i></div>
   <div class="clog">${C.lines.slice(-4).join('<br>')}</div>
   <div class="fightbtns">`;
   const btn=(act,lab,sub,cls)=>{h+=`<button class="btn ${cls||''}" data-act="${act}">${lab}<span class="bsub">${sub}</span></button>`};
   modalFns['f-rail']=()=>{pAttack('rail');return 'keep'};
-  btn('f-rail','Railgun',`~${12+9*w} dmg`);
-  if(S.tech.weap2){modalFns['f-plasma']=()=>{pAttack('plasma');return 'keep'};btn('f-plasma','Plasma Spike',`~${16+14*w}+ dmg`)}
+  btn('f-rail','Railgun'+arrow('rail'),`~${12+9*w} dmg`);
+  if(S.tech.weap2){modalFns['f-plasma']=()=>{pAttack('plasma');return 'keep'};btn('f-plasma','Plasma'+arrow('plasma'),`~${16+14*w}+ dmg`)}
   if(S.tech.weap3&&C.buster){modalFns['f-buster']=()=>{pAttack('buster');return 'keep'};btn('f-buster','Nova Buster','huge, once','bad')}
   modalFns['f-flee']=()=>{tryFlee();return 'keep'};
   btn('f-flee','Disengage',b.fx==='coward'?'always escapes':'60% escape','dim');
@@ -513,10 +634,17 @@ function renderCombat(){
   $('#modalbox').innerHTML=h;$('#modal').classList.add('on');
 }
 
-/* ---------- combat (auto-resolved, for Bobs on standing orders) ---------- */
+/* ---------- combat (auto-resolved) ---------- */
 function autoCombat(b,s){
-  let eh=35+30*s.host,rounds=0,fled=false,buster=!!S.tech.weap3;
-  const w=weapLvl();
+  if(!s.etype)s.etype=randEtype();
+  let eh=eHull(s),rounds=0,fled=false,buster=!!S.tech.weap3;
+  const w=weapLvl(),et=s.etype;
+  // AI picks its best available weapon vs this enemy type
+  const best=()=>{
+    const opts=[['rail',(12+9*w+3)*WMULT[et].rail]];
+    if(S.tech.weap2)opts.push(['plasma',(16+14*w+8)*WMULT[et].plasma]);
+    opts.sort((a,b2)=>b2[1]-a[1]);return opts[0];
+  };
   while(b.hull>0&&eh>0&&rounds<30){
     rounds++;
     if(b.hull<0.4*maxHull(b)){
@@ -524,18 +652,17 @@ function autoCombat(b,s){
     }else{
       let d;
       if(buster&&eh>60){d=70+Math.floor(Math.random()*26);buster=false}
-      else if(S.tech.weap2)d=16+14*w+Math.floor(Math.random()*17);
-      else d=12+9*w+Math.floor(Math.random()*7);
+      else{const [,avg]=best();d=Math.round(avg+(Math.random()*10-5));}
       if(b.fx==='fighter')d=Math.round(d*1.2);
-      eh-=d;
+      eh-=Math.max(1,d);
       if(eh<=0)break;
     }
-    b.hull-=5+6*s.host+Math.floor(Math.random()*7);
+    b.hull-=eDmgFor(s);
   }
   if(eh<=0){
     const r=combatRewards(b,s,s.host||1);
-    log(`<b>${b.name}</b> auto-engaged and cleared ${s.name}. Salvage: +${r.m} ⬡, +${r.dd} ✦.`,'good');
-    toast(`⚔ ${b.name} cleared ${s.name}`);sfx('boom');
+    log(`<b>${b.name}</b> auto-engaged and destroyed the ${ETYPES[et].n} ${s.transient?'near':'in'} ${s.name}. Salvage: +${r.m} ⬡, +${r.dd} ✦.`,'good');
+    toast(`⚔ ${b.name} won at ${s.name}`);sfx('boom');
   }else if(b.hull<=0){bobDownQuiet(b);}
   else if(fled){log(`${b.name} disengaged at ${s.name} — hull low, falling back.`);}
   save();
@@ -578,6 +705,11 @@ function aiTick(b){
     if(S.bobs.length<AI_BOB_CAP&&b.matter>=replCost()){
       b.matter-=replCost();b.status='repl';b.eta=20;b.etaT=20;
       log(`<b>${b.name}</b> began printing a new matrix in ${s.name}.`);
+      return;
+    }
+    if(s.res<=0){ // depleted — relocate to a live system
+      const better=s.links.filter(id=>{const t=ST(id);return t.explored&&t.host===0&&t.res>0});
+      if(better.length)doJumpBob(b,pick(better),true);
     }
     return;
   }
@@ -592,28 +724,36 @@ function aiTick(b){
 const othClass=()=>Math.min(4,2+Math.floor((S.t-S.others.t0)/600));
 function wakeOthers(){
   const O=S.others;
-  // home: farthest star from Sol without a colony
   const dist=S.stars.map(()=>99);dist[S.sol]=0;const q=[S.sol];
   while(q.length){const u=q.shift();ST(u).links.forEach(v=>{if(dist[v]>dist[u]+1){dist[v]=dist[u]+1;q.push(v)}})}
   let home=null,bd=-1;
   S.stars.forEach(s=>{if(s.id!==S.sol&&!s.colony&&dist[s.id]>bd){bd=dist[s.id];home=s}});
-  home.oth=true;home.host=4;
-  O.awake=true;O.t0=S.t;O.next=S.t+90;O.count=1;
+  home.oth=true;home.host=4;home.etype=randEtype();
+  O.awake=true;O.t0=S.t;O.next=S.t+D().expand;
   sfx('dread');
   log(`<b>CONTACT.</b> A machine intelligence of unknown origin has begun strip-mining ${known(home)?home.name:'a distant system'}. GUPPI designates them: THE OTHERS.`,'bad');
   showModal('⛒ CONTACT — THE OTHERS',
-   `Long-range SUDDAR lights up with something that should not exist: a harvesting swarm, system-wide, dismantling planets for raw matter. It is expanding. It does not respond to hails.<br><br>They will take this galaxy apart star by star — including your colonies — unless someone stops them.<br><br><span class="g">GUPPI: I've marked their territory in red. I suggest weapons research. Lots of it.</span>`,
+   `Long-range SUDDAR lights up with something that should not exist: a harvesting swarm, system-wide, dismantling planets for raw matter. It is expanding. It does not respond to hails.<br><br>They will take this galaxy apart star by star — your colonies, and eventually <b>Sol itself</b>. If Sol falls, the mission is over.<br><br><span class="g">GUPPI: I've marked their territory in red. I suggest weapons research. Lots of it.</span>`,
    [{label:'Understood',cls:'bad'}],'bad');
 }
 function captureSystem(t,quiet){
-  t.oth=true;t.host=Math.max(t.host,othClass());
-  S.others.count++;
-  if(t.colony){
-    t.siege=SIEGE_SECS;
-    sfx('bad');
-    log(`<b>⚠ ${t.name} IS UNDER ATTACK.</b> The colony falls in ${SIEGE_SECS}s unless the system is cleared.`,'bad');
-    if(!quiet)toast(`⚠ COLONY UNDER ATTACK — ${t.name}!`);
-  }else if(known(t)){
+  if(t.id===S.sol||t.colony){
+    // siege: defenders get a window to respond
+    t.oth=true;t.host=Math.max(t.host,othClass());t.etype=randEtype();
+    t.siege=t.id===S.sol?SOL_SIEGE_SECS:SIEGE_SECS;
+    t.invhp=100*t.host;
+    sfx('dread');
+    if(t.id===S.sol){
+      log(`<b>⛒ THE OTHERS HAVE REACHED SOL.</b> The cradle of humanity falls in ${SOL_SIEGE_SECS}s unless the system is cleared.`,'bad');
+      if(!quiet)toast('⛒ SOL IS UNDER ATTACK!');
+    }else{
+      log(`<b>⚠ ${t.name} IS UNDER ATTACK.</b> The colony falls in ${SIEGE_SECS}s unless the system is cleared.`,'bad');
+      if(!quiet)toast(`⚠ COLONY UNDER ATTACK — ${t.name}!`);
+    }
+    return;
+  }
+  t.oth=true;t.host=Math.max(t.host,othClass());t.etype=randEtype();
+  if(known(t)){
     log(`The Others have taken ${t.name}.`,'bad');
     if(!quiet)toast(`⛒ The Others took ${t.name}`);
   }
@@ -624,24 +764,50 @@ function captureSystem(t,quiet){
 function othersTick(){
   const O=S.others;
   if(!O.awake){
-    if(S.colonies>0||S.t>480)wakeOthers();
+    if(S.colonies>0||S.t>D().wake)wakeOthers();
     return;
   }
-  if(S.t>=O.next&&O.count<12){
+  if(S.t>=O.next){
     const frontier=[];
     S.stars.forEach(s=>{if(s.oth)s.links.forEach(id=>{const t=ST(id);
-      if(!t.oth&&t.id!==S.sol&&!frontier.includes(t))frontier.push(t)})});
-    if(frontier.length)captureSystem(frontier[Math.floor(Math.random()*frontier.length)]);
-    const interval=Math.max(45,90-Math.floor((S.t-O.t0)/120)*5);
+      if(!t.oth&&!frontier.includes(t))frontier.push(t)})});
+    if(frontier.length){
+      // they prefer to strike at colonies
+      const cols=frontier.filter(t=>t.colony||t.id===S.sol);
+      const target=(cols.length&&Math.random()<0.35)?cols[Math.floor(Math.random()*cols.length)]
+        :frontier[Math.floor(Math.random()*frontier.length)];
+      captureSystem(target);
+    }
+    const elapsed=S.t-O.t0;
+    const interval=Math.max(D().expandMin,
+      D().expand-5*Math.floor(elapsed/120)-6*S.colonies+(S.story.ally?14:0));
     O.next=S.t+interval;
   }
   // sieges
   S.stars.forEach(s=>{
     if(s.siege==null)return;
-    if(s.host===0){s.siege=null;log(`The siege of ${s.name} is broken. The colony holds.`,'good');toast(`⌂ ${s.name} saved!`);sfx('win');return;}
+    if(s.host===0){
+      s.siege=null;s.oth=false;
+      log(`The siege of ${s.name} is broken. ${s.id===S.sol?'Sol holds.':'The colony holds.'}`,'good');
+      toast(`⌂ ${s.name} saved!`);sfx('win');return;
+    }
+    // defense platforms fight back
+    if(s.def>0){
+      s.invhp-=8*s.def;
+      if(s.invhp<=0){
+        s.host=0;s.oth=false;s.siege=null;s.etype=null;
+        log(`<b>${s.name}'s defense platforms repelled the assault.</b> Lv${s.def} grid holding.`,'good');
+        toast(`🛡 ${s.name} defended itself!`);sfx('win');return;
+      }
+    }
     s.siege--;
     if(s.siege<=0){
-      s.siege=null;s.colony=false;S.colonies=Math.max(0,S.colonies-1);
+      s.siege=null;
+      if(s.id===S.sol){
+        gameOver(`The Others reached Sol, and Sol could not hold. The last transmission from the cradle of humanity is the sound of the colony ships' engines, going nowhere.`);
+        return;
+      }
+      s.colony=false;s.def=0;S.colonies=Math.max(0,S.colonies-1);
       sfx('dread');
       log(`<b>${s.name} has fallen.</b> The colony beacon goes dark. (${S.colonies}/3)`,'bad');
       showModal('⌂ COLONY LOST',
@@ -679,16 +845,27 @@ function arrive(b){
     if(s.host>0){
       if(inter){
         if(Math.random()<0.5){toast('⚠ AMBUSH!');startCombat(b,s,true);}
-        else{toast(`⚠ Hostiles in ${s.name}`);sfx('bad');log(`Hostile replicants detected in ${s.name} (class ${s.host}). Mining suspended.`,'bad');}
+        else{toast(`⚠ Hostiles in ${s.name}`);sfx('bad');log(`${ETYPES[s.etype||'swarm'].n} detected in ${s.name} (class ${s.host}). Mining suspended.`,'bad');}
       }else{
         log(`${b.name} jumped into hostiles at ${s.name}.`,'bad');
         autoCombat(b,s);
       }
-    }else if(inter&&b.id===S.active&&Math.random()<0.5){maybeEvent(b,s);}
+    }else if(inter&&b.id===S.active){
+      if(S.story.w===2&&s.alien)fireContact(b,s);
+      else if(storyDue())fireSong(b);
+      else if(Math.random()<0.5)maybeEvent(b,s);
+    }
   }else{
-    if(!inter){/* quiet arrival for ordered Bobs */}
-    else log(`${b.name} arrived at ${s.name}.`);
+    if(inter)log(`${b.name} arrived at ${s.name}.`);
     if(s.host>0&&inter&&Math.random()<0.4){toast('⚠ Intercepted!');startCombat(b,s,true);}
+    else if(inter&&s.host===0&&S.story.w===2&&s.alien)fireContact(b,s);
+  }
+  // hunter-killer raids near Others territory
+  if(!C&&!S.over&&S.others.awake&&s.host===0&&!s.oth&&s.links.some(id=>ST(id).oth)&&Math.random()<D().raid){
+    const cls=Math.min(4,2+Math.floor((S.t-S.others.t0)/900));
+    const fake={name:s.name,host:cls,oth:true,transient:true,etype:'hunter'};
+    if(inter){toast('⚠ HUNTER-KILLER INTERCEPT!');startCombat(b,fake,true);}
+    else{log(`${b.name} was intercepted by a hunter-killer near ${s.name}!`,'bad');autoCombat(b,fake);}
   }
   refresh();save();
 }
@@ -709,21 +886,29 @@ function doReplicate(){
   refresh();save();
 }
 function doColony(){
-  const b=activeBob(),s=ST(b.sys);
-  if(b.status!=='idle'||s.hab!==2||s.colony||s.host>0||!s.scanned||b.matter<1500)return;
-  b.matter-=1500;s.colony=true;S.colonies++;
+  const b=activeBob(),s=ST(b.sys),cost=colonyCost();
+  if(b.status!=='idle'||s.hab!==2||s.colony||s.host>0||!s.scanned||b.matter<cost)return;
+  b.matter-=cost;s.colony=true;S.colonies++;
   sfx('win');
   log(`<b>COLONY ESTABLISHED at ${s.name}.</b> The beacon is lit. Colony ships are on their way. (${S.colonies}/3)`,'good');
   if(S.colonies>=3&&!S.won){
     S.won=true;
     showModal('🌍 MISSION COMPLETE',
-     `Three beacons burn across the dark, and behind each one a world is waking up: landers, habitats, the first impossible green of Earth grass under an alien sun.<br><br>You were one man, once. Now you are a legion — and humanity's future is measured in galaxies.<br><br><span class="g">GUPPI: Mission parameters satisfied. The Others, however, remain. Shall we?<br>Fleet: ${S.bobs.length} • Systems explored: ${S.stars.filter(x=>x.explored).length}/${S.stars.length}</span>`,
-     [{label:'Keep going (endless mode)'}]);
+     `Three beacons burn across the dark, and behind each one a world is waking up: landers, habitats, the first impossible green of Earth grass under an alien sun.<br><br>You were one man, once. Now you are a legion — and humanity's future is measured in galaxies.<br><br><span class="g">Score: ${score()} — ${D().label}<br>GUPPI: Mission parameters satisfied. The Others, however, remain. Shall we?</span>`,
+     [{label:'📤 Share your score',cls:'dim',fn:()=>{shareScore();return 'keep'}},
+      {label:'Keep going (endless mode)'}]);
   }else{
     showModal('⌂ COLONY ESTABLISHED',
-     `${s.name} is officially humanity's newest home. GUPPI plays a fanfare he composed himself. It's... not bad.<br><br><span class="g">Colonies: ${S.colonies}/3 — guard it well.</span>`,
+     `${s.name} is officially humanity's newest home. GUPPI plays a fanfare he composed himself. It's... not bad.<br><br><span class="g">Colonies: ${S.colonies}/3 — guard it well. The next one will cost more.</span>`,
      [{label:'Continue'}]);
   }
+  refresh();save();
+}
+function doDefense(){
+  const b=activeBob(),s=ST(b.sys),cost=defCost(s);
+  if(b.status!=='idle'||s.host>0||s.def>=3||b.matter<cost||!(s.colony||s.id===S.sol))return;
+  b.matter-=cost;s.def++;
+  sfx('ok');log(`Defense platform Lv${s.def} online at ${s.name}.`,'acc');toast(`🛡 ${s.name} — defenses Lv${s.def}`);
   refresh();save();
 }
 function buyTech(k){
@@ -743,19 +928,25 @@ function setOrder(id,o){
 
 /* ---------- tick ---------- */
 function tick(){
-  if(!S)return;
+  if(!S||S.over)return;
   S.t++;
   for(const b of S.bobs.slice()){
     if(b.status==='travel'){b.eta--;if(b.eta<=0)arrive(b);}
     else if(b.status==='repl'){b.eta--;if(b.eta<=0){b.status='idle';spawnBob(b.sys);refresh();save();}}
     else{
       const s=ST(b.sys);
-      if(s.host===0)b.matter+=mineRate(s,b);
-      if(b.hull<maxHull(b))b.hull=Math.min(maxHull(b),b.hull+0.5);
+      if(s.host===0){
+        const m=mineRate(s,b);
+        if(s.res>0)s.res=Math.max(0,s.res-m);
+        b.matter+=m;
+      }
+      // repairs cost matter now
+      if(b.hull<maxHull(b)&&b.matter>=0.5){b.hull=Math.min(maxHull(b),b.hull+0.5);b.matter-=0.5;}
       if(b.order!=='manual'&&(S.t+b.id)%2===0)aiTick(b);
     }
   }
   othersTick();
+  if(S.story.ally&&S.t%240===0)whistlerGift();
   if(S.t%10===0)save();
   renderTop();
   if(curTab==='sys')renderSystem();
@@ -764,45 +955,53 @@ function tick(){
 
 /* ---------- offline progress ---------- */
 function offlineCatchup(){
+  if(S.over)return;
   const now=Date.now();
   const dt=Math.min(3600,Math.floor((now-(S.lastSeen||now))/1000));
   if(dt<90)return;
   let mined=0;const arrivals=[],newBobs=[];
   S.bobs.slice().forEach(b=>{
+    const mineFor=(s,secs)=>{
+      if(s.host>0||secs<=0)return 0;
+      const rate=mineRate(s,b);
+      let m;
+      if(s.res>=rate*secs){m=rate*secs;s.res-=m;}
+      else{const tFull=s.res/Math.max(rate,0.1);m=s.res+0.5*Math.max(0,secs-tFull);s.res=0;}
+      b.matter+=m;return m;
+    };
     if(b.status==='travel'){
       if(b.eta<=dt){
         const rem=dt-b.eta;
         b.status='idle';b.sys=b.dest;b.eta=0;
         const s=ST(b.sys);
         if(!s.explored){s.explored=true;S.data+=dataGain(b,12);arrivals.push(s.name);}
-        if(s.host===0){const m=mineRate(s,b)*rem;b.matter+=m;mined+=m;}
+        mined+=mineFor(s,rem);
       }else b.eta-=dt;
     }else if(b.status==='repl'){
       if(b.eta<=dt){
         const rem=dt-b.eta;
         b.status='idle';b.eta=0;
         const nb=spawnBob(b.sys);newBobs.push(nb.name);
-        const s=ST(b.sys);
-        if(s.host===0){const m=mineRate(s,b)*rem;b.matter+=m;mined+=m;}
+        mined+=mineFor(ST(b.sys),rem);
       }else b.eta-=dt;
     }else{
-      const s=ST(b.sys);
-      if(s.host===0){const m=mineRate(s,b)*dt;b.matter+=m;mined+=m;}
-      b.hull=Math.min(maxHull(b),b.hull+0.5*dt);
+      mined+=mineFor(ST(b.sys),dt);
+      b.hull=Math.min(maxHull(b),b.hull+0.25*dt);
     }
   });
   S.t+=dt;
-  // The Others advance while you're away — but mercy-capped at 2 captures
   let captures=0;
   if(S.others.awake){
     const n=Math.min(2,Math.floor(dt/90));
     for(let i=0;i<n;i++){
-      if(S.others.count>=12)break;
       const frontier=[];
       S.stars.forEach(s=>{if(s.oth)s.links.forEach(id=>{const t=ST(id);
-        if(!t.oth&&t.id!==S.sol&&!frontier.includes(t))frontier.push(t)})});
+        if(!t.oth&&!frontier.includes(t))frontier.push(t)})});
       if(!frontier.length)break;
-      captureSystem(frontier[Math.floor(Math.random()*frontier.length)],true);
+      // offline mercy: never start a Sol siege while you're away
+      const safe_=frontier.filter(t=>t.id!==S.sol);
+      if(!safe_.length)break;
+      captureSystem(safe_[Math.floor(Math.random()*safe_.length)],true);
       captures++;
     }
   }
@@ -819,17 +1018,23 @@ function offlineCatchup(){
 }
 
 /* ---------- intel helpers ---------- */
-const known=s=>s.explored||s.links.some(id=>ST(id).explored);
-const hasIntel=s=>s.explored||(S.tech.suddar&&s.links.some(id=>S.bobs.some(b=>b.sys===id&&b.status!=='travel')));
+const known=s=>S.story.ally||s.explored||s.alien||s.links.some(id=>ST(id).explored);
+const hasIntel=s=>S.story.ally||s.explored||(S.tech.suddar&&s.links.some(id=>S.bobs.some(b=>b.sys===id&&b.status!=='travel')));
 function intelChips(s){
-  if(!hasIntel(s))return `<span class="chip">intel: unknown</span>`;
-  let h=`<span class="chip">⬡ richness ${'▮'.repeat(s.rich)}${'▯'.repeat(5-s.rich)}</span>`;
+  if(!hasIntel(s)){
+    return (s.alien?`<span class="chip blue">♫ anomalous signal</span>`:'')+`<span class="chip">intel: unknown</span>`;
+  }
+  const pct=Math.round(100*s.res/reserveMax(s));
+  let h=s.res<=0?`<span class="chip warn">⬡ depleted</span>`
+    :`<span class="chip">⬡ ${'▮'.repeat(s.rich)}${'▯'.repeat(5-s.rich)} ${pct}%</span>`;
   if(s.hab===2)h+=`<span class="chip good">🌍 garden world</span>`;
   else if(s.hab===1)h+=`<span class="chip warn">marginal world</span>`;
   if(s.colony)h+=`<span class="chip good">⌂ colony</span>`;
+  if(s.def>0)h+=`<span class="chip acc">🛡 Lv${s.def}</span>`;
+  if(s.alien)h+=`<span class="chip blue">♫ anomalous signal</span>`;
   if(s.siege!=null)h+=`<span class="chip bad">⚠ SIEGE — ${s.siege}s</span>`;
-  if(s.oth)h+=`<span class="chip bad">⛒ THE OTHERS ×${s.host}</span>`;
-  else if(s.host>0)h+=`<span class="chip bad">⚠ hostiles ×${s.host}</span>`;
+  if(s.oth)h+=`<span class="chip bad">⛒ OTHERS ${ETYPES[s.etype||'swarm'].n} ×${s.host}</span>`;
+  else if(s.host>0)h+=`<span class="chip bad">⚠ ${ETYPES[s.etype||'swarm'].n} ×${s.host}</span>`;
   else if(s.explored)h+=`<span class="chip acc">secure</span>`;
   return h;
 }
@@ -882,18 +1087,21 @@ function renderSystem(){
     <div class="bar"><i style="width:${p}%"></i></div></div>`;
     $('#view-sys').innerHTML=h;return;
   }
-  // idle actions
   if(s.host>0){
-    h+=`<div class="sub" style="color:var(--bad)">${s.oth?'The Others control this system.':'Hostile replicants control this system.'} Mining and construction suspended.${s.siege!=null?` <b>The colony falls in ${s.siege}s.</b>`:''}</div>
-    <button class="btn bad" data-act="engage">⚔ Engage hostiles<span class="bsub">threat class ${s.host}</span></button>`;
+    h+=`<div class="sub" style="color:var(--bad)">${s.oth?'The Others control this system.':'Hostiles control this system.'} Mining and construction suspended.${s.siege!=null?` <b>${s.id===S.sol?'Sol':'The colony'} falls in ${s.siege}s.</b>`:''}</div>
+    <button class="btn bad" data-act="engage">⚔ Engage ${ETYPES[s.etype||'swarm'].n}<span class="bsub">class ${s.host} · ${ETYPES[s.etype||'swarm'].hint}</span></button>`;
   }else{
-    h+=`<div class="sub">Autofactory output: <b style="color:var(--acc)">+${mineRate(s,b)} ⬡/s</b></div>`;
+    h+=`<div class="sub">Autofactory output: <b style="color:var(--acc)">+${mineRate(s,b)} ⬡/s</b>${s.res<=0?' (reserves exhausted)':''} · repairs cost ⬡</div>`;
     if(!s.scanned)h+=`<button class="btn" data-act="scan">📡 Deep scan system<span class="bsub">+✦ research data</span></button>`;
     const rc=replCost();
     const full=S.bobs.length>=MAX_BOBS;
     h+=`<button class="btn" data-act="repl" ${(b.matter<rc||full)?'disabled':''}>⌬ Replicate — new Bob<span class="bsub">${full?'matrix capacity reached':rc+' ⬡ · 20s · he\'ll be… mostly you'}</span></button>`;
     if(s.hab===2&&!s.colony){
-      h+=`<button class="btn" data-act="colony" ${(!s.scanned||b.matter<1500)?'disabled':''}>⌂ Establish colony<span class="bsub">1500 ⬡${!s.scanned?' · requires deep scan':''} — humanity moves in</span></button>`;
+      const cc=colonyCost();
+      h+=`<button class="btn" data-act="colony" ${(!s.scanned||b.matter<cc)?'disabled':''}>⌂ Establish colony<span class="bsub">${cc} ⬡${!s.scanned?' · requires deep scan':''} — humanity moves in</span></button>`;
+    }
+    if((s.colony||s.id===S.sol)&&s.def<3){
+      h+=`<button class="btn" data-act="defense" ${b.matter<defCost(s)?'disabled':''}>🛡 Defense platform Lv${s.def+1}<span class="bsub">${defCost(s)} ⬡ — fights sieges even when no Bob is here</span></button>`;
     }
     if(s.colony)h+=`<div class="sub" style="color:var(--good);margin-top:8px">⌂ A human colony thrives here. They named a lake after you.</div>`;
   }
@@ -935,7 +1143,8 @@ function renderTech(){
 }
 function renderLog(){
   const oth=S.others.awake?` · <span style="color:var(--bad)">Others hold ${S.stars.filter(x=>x.oth).length} systems</span>`:'';
-  let h=`<div class="panel"><h2>≡ MISSION LOG</h2><div class="sub">Systems explored: ${S.stars.filter(x=>x.explored).length}/${S.stars.length} · Fleet: ${S.bobs.length} · Colonies: ${S.colonies}/3${oth}</div></div>`;
+  let h=`<div class="panel"><h2>≡ MISSION LOG</h2><div class="sub">Score: <b style="color:var(--acc)">${score()}</b> (${D().label}) · Explored: ${S.stars.filter(x=>x.explored).length}/${S.stars.length} · Fleet: ${S.bobs.length} · Colonies: ${S.colonies}/3 · Kills: ${S.stats.kills}${oth}</div>
+  <button class="btn dim" data-act="share" style="margin-top:10px">📤 Share score</button></div>`;
   S.log.forEach(l=>{h+=`<div class="logline ${l.c}">${l.m}</div>`});
   h+=`<button class="btn dim" data-act="reset" style="margin-top:16px">⟲ Abandon mission (new game)</button>
   <div class="sub" style="margin:14px 0 30px;text-align:center">An unofficial fan game inspired by the <i>Bobiverse</i> novels by Dennis E. Taylor.<br>Go read them — they're great.</div>`;
@@ -954,7 +1163,7 @@ function fitCanvas(){
   mapW=r.width;mapH=r.height;
   dust=[];for(let i=0;i<90;i++)dust.push({x:Math.random()*mapW,y:Math.random()*mapH,r:Math.random()*1.1+0.2,a:Math.random()*0.5+0.1});
 }
-const PADX=26,PADTOP=26,PADBOT=40;
+const PADX=24,PADTOP=24,PADBOT=38;
 const sx=s=>PADX+s.x*(mapW-2*PADX);
 const sy=s=>PADTOP+s.y*(mapH-PADTOP-PADBOT);
 function drawMap(now){
@@ -977,6 +1186,8 @@ function drawMap(now){
     const intel=hasIntel(s);
     if(s.id===selectedStar){ctx.strokeStyle='rgba(75,225,195,0.9)';ctx.lineWidth=1.5;
       ctx.beginPath();ctx.arc(x,y,13+pulse*2,0,7);ctx.stroke();}
+    if(s.alien){ctx.strokeStyle=`rgba(57,180,255,${0.5+0.5*pulse})`;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(x,y,11+pulse*2,0,7);ctx.stroke();}
     if(intel&&s.oth){
       ctx.strokeStyle=`rgba(255,93,108,${0.45+0.45*pulse})`;ctx.lineWidth=2;
       ctx.beginPath();ctx.arc(x,y,10+pulse*1.5,0,7);ctx.stroke();
@@ -990,7 +1201,7 @@ function drawMap(now){
       ctx.beginPath();ctx.arc(x,y,14,0,7);ctx.stroke();}
     ctx.fillStyle=s.oth?'#ff5d6c':s.colony?'#6ee07a':s.explored?'#dfeefb':'#3a4d6b';
     ctx.beginPath();ctx.arc(x,y,s.explored||s.oth?3.5:3,0,7);ctx.fill();
-    if(s.explored||s.id===selectedStar){
+    if(s.explored||s.id===selectedStar||s.alien){
       ctx.fillStyle=s.id===S.sol?'#9fb8d4':'rgba(140,165,195,0.85)';
       ctx.font='10px -apple-system,sans-serif';ctx.textAlign='center';
       ctx.fillText(s.name,x,y+18);
@@ -1013,7 +1224,7 @@ function drawMap(now){
 cv.addEventListener('click',e=>{
   const r=cv.getBoundingClientRect();
   const px=e.clientX-r.left,py=e.clientY-r.top;
-  let best=null,bd=30;
+  let best=null,bd=26;
   S.stars.forEach(s=>{if(!known(s))return;
     const d=Math.hypot(sx(s)-px,sy(s)-py);if(d<bd){bd=d;best=s}});
   if(!best){$('#starcard').classList.remove('on');selectedStar=-1;return;}
@@ -1037,23 +1248,29 @@ function showStarCard(s){
 
 /* ---------- intro & help ---------- */
 function intro(){
+  const diffBtns=Object.keys(DIFFS).map(k=>({
+    label:'Launch — '+DIFFS[k].label,sub:DIFFS[k].sub,cls:k==='doom'?'bad':k==='hard'?'dim':'',
+    fn:()=>{S.diff=k;save();help();return 'keep'}
+  }));
   showModal('WE ARE LEGION',
    `<span class="g">// 2133. Earth is dying.</span><br><br>
    You were <b>Robert Johansson</b> — engineer, sci-fi nerd, recently deceased. You woke up 117 years later as the uploaded mind of a <b>self-replicating Von Neumann probe</b>, flung into the dark with one job:<br><br>
    <b>Find humanity a new home.</b> Three garden worlds, secured and beaconed, before the colony ships run out of time.<br><br>
-   And Bob — long-range telescopes are picking up something out there that eats stars. Hurry.<br><br>
+   And Bob — something out there eats stars. If it reaches Sol, everything ends.<br><br>
    <span class="g">GUPPI: May I suggest we begin by not dying, sir?</span>`,
-   [{label:'Launch',sub:'GUPPI will brief you on the way',fn:()=>{help();return 'keep'}}]);
+   diffBtns);
 }
 function help(){
   showModal('GUPPI BRIEFING',
-   `<b>☉ Mine</b> — every idle Bob automatically mines ⬡ matter. Richer systems mine faster.<br><br>
-   <b>✦ Explore</b> — tap stars on the map, jump to linked systems. First visits and deep scans earn ✦ for research.<br><br>
-   <b>⌬ Replicate</b> — spend ⬡ to print new Bobs. Each has his own personality — some drift gives real bonuses.<br><br>
-   <b>⚙ Standing orders</b> — in FLEET, set Bobs to EXPLORE, EXPAND or GUARD and they'll act on their own. You're a collective, not a micromanager.<br><br>
-   <b>⛒ The Others</b> — a star-eating swarm is expanding across the map. They will besiege your colonies. Research weapons; clear a besieged system before the timer runs out and the colony survives.<br><br>
-   <b>⌂ Win</b> — establish colonies on 3 🌍 garden worlds.<br><br>
-   <span class="g">Progress autosaves — and the fleet keeps mining for up to an hour while you're away. GUPPI out.</span>`,
+   `<b>☉ Mine</b> — idle Bobs mine ⬡ automatically, but systems <b>deplete</b>. Repairs cost ⬡ too. Keep the frontier moving.<br><br>
+   <b>✦ Explore</b> — tap stars, jump to linked systems. First visits and scans earn ✦ for research.<br><br>
+   <b>⌬ Replicate</b> — print new Bobs. Replicative drift gives some of them real bonuses.<br><br>
+   <b>⚙ Standing orders</b> — in FLEET, set Bobs to EXPLORE / EXPAND / GUARD and they act on their own.<br><br>
+   <b>⚔ Know your enemy</b> — railguns shred <b>drone swarms</b>, plasma pierces <b>harvesters</b>, and <b>hunter-killers</b> just hit hard. Watch the ▲▼ hints.<br><br>
+   <b>⛒ The Others</b> — they expand forever and accelerate as you grow. They besiege colonies — and <b>if Sol falls, you lose</b>. Build 🛡 defense platforms at colonies and Sol.<br><br>
+   <b>♫ And something else is out there.</b> Listen for it.<br><br>
+   <b>⌂ Win</b> — colonies on 3 🌍 garden worlds. Restart anytime with ⟲.<br><br>
+   <span class="g">Autosaves on this device; the fleet keeps working up to an hour while you're away. GUPPI out.</span>`,
    [{label:'Understood'}]);
 }
 
@@ -1070,16 +1287,18 @@ document.addEventListener('click',e=>{
     case 'tab':setTab(v);break;
     case 'help':help();break;
     case 'mute':S.muted=!S.muted;renderTop();save();break;
+    case 'share':shareScore();break;
     case 'jump':doJump(+v);break;
     case 'bob':S.active=+v;toast('Direct control: '+activeBob().name);refresh();save();break;
     case 'ord':{const [id,o]=v.split(':');setOrder(+id,o);break;}
     case 'scan':doScan();break;
     case 'repl':doReplicate();break;
     case 'colony':doColony();break;
+    case 'defense':doDefense();break;
     case 'engage':{const b=activeBob(),s=ST(b.sys);if(s.host>0&&b.status==='idle')startCombat(b,s,false);break;}
     case 'buy':buyTech(v);break;
     case 'reset':
-      showModal('ABANDON MISSION?','All Bobs, colonies and research will be lost to the void. A fresh probe launches into a freshly generated galaxy.',
+      showModal('⟲ START A NEW GAME?','All Bobs, colonies and research will be lost to the void. A fresh probe launches into a freshly generated, bigger galaxy — you pick the difficulty.',
        [{label:'Yes — start over',cls:'bad',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();setTab('map');intro();}},
         {label:'No — keep going',cls:'dim'}]);
       break;
@@ -1097,6 +1316,7 @@ renderTop();
 requestAnimationFrame(drawMap);
 setInterval(tick,1000);
 if(!hadSave)intro();
+else if(S.over)gameOver('The previous timeline ended here.');
 else{toast('Save loaded — welcome back, '+activeBob().name);offlineCatchup();}
 </script>
 </body>
