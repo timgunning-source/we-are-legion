@@ -122,6 +122,7 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
     <button id="bobchip" data-act="tab:fleet">BOB-1</button>
     <button class="icobtn" data-act="help">?</button>
     <button class="icobtn" data-act="reset">⟲</button>
+    <button class="icobtn" id="musicbtn" data-act="music">♫</button>
     <button class="icobtn" id="mutebtn" data-act="mute">♪</button>
   </div>
   <div id="main">
@@ -290,7 +291,7 @@ function newGame(diff){
   rng=Math.random;
   S={v:3,seed,diff:diff||'normal',stars,sol,bobs:[{id:1,name:'Bob',quirk:'the original. Probably.',fx:null,order:'manual',
       sys:sol,matter:150,hull:80,status:'idle',eta:0,etaT:0,from:sol,dest:sol}],
-    active:1,born:1,nextId:2,data:0,tech:{},colonies:0,log:[],won:false,over:false,t:0,muted:false,
+    active:1,born:1,nextId:2,data:0,tech:{},colonies:0,log:[],won:false,over:false,t:0,muted:false,music:true,
     others:{awake:false,t0:0,next:0},story:{w:0,next:8,ally:false,target:-1},stats:{kills:0},lastSeen:Date.now()};
   log('GUPPI: Core systems nominal. Replicant matrix stable. Welcome back, Bob.','acc');
   log('Mission: locate and settle 3 garden worlds for the colony ships waiting at Sol. And keep Sol alive.');
@@ -307,6 +308,7 @@ function migrate(){
   if(!S.story)S.story={w:0,next:Math.max(8,S.stars.filter(s=>s.explored).length+4),ally:false,target:-1};
   if(!S.stats)S.stats={kills:0};
   if(S.over===undefined)S.over=false;
+  if(S.music===undefined)S.music=true;
   S.bobs.forEach(b=>{if(!b.order)b.order='manual';if(b.fx===undefined)b.fx=null});
   S.stars.forEach(s=>{
     if(s.oth===undefined)s.oth=false;
@@ -351,6 +353,93 @@ function sfx(kind){
     else if(kind==='song'){[392,523,659,523,392].forEach((f,i)=>play(f,i*0.16,0.3,'triangle',0.05))}
   }catch(e){}
 }
+
+/* ---------- generative ambient music ----------
+   No audio files: an endless space soundtrack synthesized live.
+   Calm mood = slow minor pads + sparse echoing melody.
+   Dark mood (combat / sieges) = lower drone, dissonant chords, war pulse. */
+let MU={on:false,int:null,step:0,ci:0,mood:'calm',g:null,fil:null,del:null,drones:[]};
+const MUS_BASE=110;
+const mhz=(r,s)=>MUS_BASE*Math.pow(2,(r+s)/12);
+const PROG={
+  calm:[{r:0,iv:[0,3,7,12,14]},{r:-4,iv:[0,4,7,12,16]},{r:-2,iv:[0,3,7,10,12]},{r:5,iv:[0,4,7,11,12]}],
+  dark:[{r:0,iv:[0,3,6,12]},{r:-1,iv:[0,3,7,13]},{r:0,iv:[0,1,7,12]},{r:-5,iv:[0,3,6,10]}],
+};
+function musicMood(){
+  if(!S)return 'calm';
+  if(C||S.stars.some(s=>s.siege!=null))return 'dark';
+  return 'calm';
+}
+function startMusic(){
+  if(MU.on||!S||S.music===false)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    MU.g=AC.createGain();MU.g.gain.value=0;
+    MU.fil=AC.createBiquadFilter();MU.fil.type='lowpass';MU.fil.frequency.value=900;MU.fil.Q.value=0.6;
+    MU.del=AC.createDelay(1.2);MU.del.delayTime.value=0.45;
+    const fb=AC.createGain();fb.gain.value=0.35;
+    MU.del.connect(fb);fb.connect(MU.del);
+    MU.fil.connect(MU.g);MU.del.connect(MU.g);
+    MU.g.connect(AC.destination);
+    MU.g.gain.setTargetAtTime(0.055,AC.currentTime,2);
+    MU.drones=[0,0.7].map(det=>{
+      const o=AC.createOscillator(),og=AC.createGain();
+      o.type='sawtooth';o.frequency.value=mhz(0,-12)+det;og.gain.value=0.12;
+      o.connect(og);og.connect(MU.fil);o.start();return o;
+    });
+    MU.step=0;MU.ci=0;MU.mood='calm';MU.on=true;
+    MU.int=setInterval(musicStep,500);
+  }catch(e){}
+}
+function stopMusic(){
+  if(!MU.on)return;
+  try{
+    const g=MU.g,dr=MU.drones;
+    g.gain.setTargetAtTime(0,AC.currentTime,0.8);
+    setTimeout(()=>{try{dr.forEach(o=>o.stop());g.disconnect();}catch(e){}},3000);
+    clearInterval(MU.int);
+  }catch(e){}
+  MU.on=false;MU.drones=[];
+}
+function mnote(f,t0,dur,vol,type,dest){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type||'sine';o.frequency.value=f;
+  g.gain.setValueAtTime(0,t0);
+  g.gain.linearRampToValueAtTime(vol,t0+Math.min(1.5,dur*0.4));
+  g.gain.setTargetAtTime(0,t0+dur*0.6,dur*0.25);
+  o.connect(g);g.connect(dest||MU.fil);
+  o.start(t0);o.stop(t0+dur*1.6);
+}
+function musicStep(){
+  if(!MU.on||!AC)return;
+  if(document.hidden)return;
+  try{
+    const t=AC.currentTime;
+    const st=MU.step++;
+    if(st%16===0){
+      if(st%32===0)MU.mood=musicMood();
+      const pool=PROG[MU.mood];
+      MU.ci=(MU.ci+1)%pool.length;
+      const ch=pool[MU.ci];
+      const f=mhz(ch.r,MU.mood==='dark'?-24:-12);
+      MU.drones.forEach((o,i)=>o.frequency.setTargetAtTime(f+i*0.7,t,1.5));
+      ch.iv.slice(0,4).forEach((s,i)=>mnote(mhz(ch.r,s),t+i*0.15,7,0.05,'triangle'));
+      MU.fil.frequency.setTargetAtTime(MU.mood==='dark'?500:900+Math.random()*500,t,2);
+    }
+    if(MU.mood==='dark'&&st%4===2)mnote(mhz(PROG.dark[MU.ci].r,-24),t,0.5,0.10,'sine');
+    const mc=MU.mood==='dark'?0.10:0.18;
+    if(Math.random()<mc){
+      const ch=PROG[MU.mood][MU.ci];
+      const s=ch.iv[Math.floor(Math.random()*ch.iv.length)]+12*(Math.random()<0.4?2:1);
+      mnote(mhz(ch.r,s),t+0.05,2.5,0.05,'sine',MU.del);
+    }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(!MU.on||!MU.g||!AC)return;
+  MU.g.gain.setTargetAtTime(document.hidden?0:0.055,AC.currentTime,0.5);
+});
 
 /* ---------- modal ---------- */
 function showModal(title,body,btns,titleCls){
@@ -1047,6 +1136,7 @@ function renderTop(){
   $('#r-col').textContent=S.colonies+'/3';
   $('#bobchip').textContent=b.name.toUpperCase()+' ▾';
   $('#mutebtn').textContent=S.muted?'∅':'♪';
+  $('#musicbtn').textContent=S.music?'♫':'⊘';
 }
 function setTab(t){
   curTab=t;
@@ -1270,11 +1360,13 @@ function help(){
    <b>⛒ The Others</b> — they expand forever and accelerate as you grow. They besiege colonies — and <b>if Sol falls, you lose</b>. Build 🛡 defense platforms at colonies and Sol.<br><br>
    <b>♫ And something else is out there.</b> Listen for it.<br><br>
    <b>⌂ Win</b> — colonies on 3 🌍 garden worlds. Restart anytime with ⟲.<br><br>
-   <span class="g">Autosaves on this device; the fleet keeps working up to an hour while you're away. GUPPI out.</span>`,
+   <span class="g">♫ toggles the ambient soundtrack (it darkens when things go wrong — listen). ♪ toggles sound effects. Autosaves on this device; the fleet keeps working up to an hour while you're away. GUPPI out.</span>`,
    [{label:'Understood'}]);
 }
 
 /* ---------- input delegation ---------- */
+// music needs a user gesture on iOS — the very first tap anywhere starts it
+document.addEventListener('click',()=>{if(S&&S.music&&!MU.on)startMusic();},true);
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');
   if(!el)return;
@@ -1287,6 +1379,7 @@ document.addEventListener('click',e=>{
     case 'tab':setTab(v);break;
     case 'help':help();break;
     case 'mute':S.muted=!S.muted;renderTop();save();break;
+    case 'music':S.music=!S.music;if(S.music)startMusic();else stopMusic();renderTop();save();break;
     case 'share':shareScore();break;
     case 'jump':doJump(+v);break;
     case 'bob':S.active=+v;toast('Direct control: '+activeBob().name);refresh();save();break;
