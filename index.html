@@ -157,7 +157,7 @@ h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;le
 
 <script>
 'use strict';
-/* ============ WE ARE LEGION v4 — an unofficial fan game inspired by
+/* ============ WE ARE LEGION v5 — an unofficial fan game inspired by
    Dennis E. Taylor's Bobiverse novels. Original code & text. ============ */
 
 const $=s=>document.querySelector(s);
@@ -178,11 +178,13 @@ const ETYPES={
  swarm:{n:'drone swarm',hull:1.1,dmg:0.85,hint:'railguns excel against it'},
  harvester:{n:'harvester',hull:1.45,dmg:0.8,hint:'plasma pierces its armour'},
  hunter:{n:'hunter-killer',hull:0.8,dmg:1.3,hint:'fast and vicious — hit it hard'},
+ dreadnought:{n:'dreadnought',hull:1.6,dmg:1.05,hint:'a fortress — Nova Busters crack it'},
 };
 const WMULT={
  swarm:{rail:1.5,plasma:0.6,buster:1},
  harvester:{rail:0.6,plasma:1.5,buster:1},
  hunter:{rail:1,plasma:1,buster:1},
+ dreadnought:{rail:0.8,plasma:0.8,buster:1.4},
 };
 const randEtype=()=>['swarm','swarm','harvester','hunter'][Math.floor(Math.random()*4)];
 
@@ -230,6 +232,12 @@ const TECHS=[
  {k:'hull2',n:'Adaptive Armor',c:90,d:'+80 more max hull.',req:'hull1'},
  {k:'suddar',n:'SUDDAR Long-Range',c:55,d:'Reveal intel on systems adjacent to your Bobs.'},
  {k:'terra',n:'Terraforming',c:200,d:'Convert marginal worlds into garden worlds (4000 ⬡, 180s).',req:'mining2'},
+ {k:'shield1',n:'Deflection Field',c:70,d:'All Bobs take 18% less combat damage.',req:'hull1'},
+ {k:'shield2',n:'Phase Shielding',c:150,d:'A further 18% damage reduction.',req:'shield1'},
+ {k:'repair',n:'Self-Repair Nanites',c:75,d:'Hull regeneration doubled and free. Unlocks Repair Drones in battle.',req:'hull1'},
+ {k:'salvage',n:'Wreck Harvesters',c:65,d:'+50% matter salvaged from combat.',req:'weap1'},
+ {k:'scut',n:'SCUT Relay Network',c:90,d:'The fleet pools its matter: building and replicating can draw from every Bob.',req:'drive1'},
+ {k:'cloak',n:'Stealth Coating',c:120,d:'Hunter-killer raids are rarer and can never ambush you.',req:'drive2'},
 ];
 
 /* ---------- achievements ---------- */
@@ -271,6 +279,16 @@ const colonyCost=()=>Math.round([1500,3000,5000][Math.min(S.colonies,2)]*(S.diff
 const defCost=s=>600*Math.pow(2,s.def);
 const jumpSecs=(d,b)=>Math.max(4,Math.ceil(d*400/(6+3*techLvl('drive'))*(b&&b.fx==='pilot'?0.7:1)));
 const dataGain=(b,d)=>Math.round(d*(b&&b.fx==='sci'?1.3:1));
+// shields reduce all incoming combat damage
+const incoming=s=>Math.max(1,Math.round(eDmgFor(s)*(1-0.18*techLvl('shield'))));
+// SCUT relay: spending can draw on the whole fleet
+const availMatter=b=>S.tech.scut?S.bobs.reduce((a,x)=>a+x.matter,0):b.matter;
+function payMatter(b,amt){
+  if(!S.tech.scut||b.matter>=amt){b.matter-=amt;return;}
+  let rem=amt-b.matter;b.matter=0;
+  for(const x of S.bobs){if(x.id===b.id)continue;
+    const take=Math.min(x.matter,rem);x.matter-=take;rem-=take;if(rem<=0)break;}
+}
 const score=()=>Math.round((S.colonies*1000+S.stars.filter(s=>s.explored).length*40
   +S.bobs.length*120+(S.stats.kills||0)*150+Math.floor(S.data)*2
   +Object.keys(S.ach||{}).length*200+(S.hiveDead?3000:0))*D().score);
@@ -286,17 +304,26 @@ function dailyTagStr(){
   const d=new Date();
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
 }
-function newGame(diff,fixedSeed,dailyTag){
+const SIZES={
+  standard:{label:'Standard',n:38,sep:0.105,eden:5,marg:8,sub:'38 stars — the classic'},
+  large:{label:'Large',n:52,sep:0.090,eden:6,marg:10,sub:'52 stars — a longer war'},
+  vast:{label:'Vast',n:68,sep:0.078,eden:8,marg:13,sub:'68 stars — pinch-zoom recommended'},
+};
+function newGame(diff,fixedSeed,dailyTag,size){
+  size=SIZES[size]?size:'standard';
+  const SZ=SIZES[size];
   const seed=fixedSeed!=null?fixedSeed:((Date.now()^(Math.random()*1e9))>>>0);
   rng=mulberry32(seed);
   const stars=[]; let guard=0;
-  while(stars.length<38&&guard++<9000){
+  while(stars.length<SZ.n&&guard++<15000){
     const x=0.07+rng()*0.86, y=0.06+rng()*0.82;
-    if(stars.every(s=>Math.hypot(s.x-x,s.y-y)>0.105)) stars.push({x,y});
+    if(stars.every(s=>Math.hypot(s.x-x,s.y-y)>SZ.sep)) stars.push({x,y});
   }
   let sol=0,best=9;
   stars.forEach((s,i)=>{const d=Math.hypot(s.x-0.5,s.y-0.90);if(d<best){best=d;sol=i}});
-  const names=STAR_NAMES.slice(); for(let i=names.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
+  const names=STAR_NAMES.slice();
+  while(names.length<stars.length+2)names.push(`HD ${1000+Math.floor(rng()*89000)}`);
+  for(let i=names.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
   stars.forEach((s,i)=>{s.id=i;s.name=i===sol?'Sol':names.pop();s.links=[];
     s.explored=false;s.scanned=false;s.colony=false;s.rich=ri(1,5);s.hab=0;s.host=0;
     s.oth=false;s.siege=null;s.invhp=0;s.def=0;s.etype=null;s.alien=false;s.res=0;s.hive=false;s.terra=null;});
@@ -317,18 +344,21 @@ function newGame(diff,fixedSeed,dailyTag){
   const dist=stars.map(()=>99);dist[sol]=0;const q=[sol];
   while(q.length){const u=q.shift();stars[u].links.forEach(v=>{if(dist[v]>dist[u]+1){dist[v]=dist[u]+1;q.push(v)}})}
   const far=stars.filter(s=>s.id!==sol&&dist[s.id]>=2).sort(()=>rng()-0.5);
-  far.slice(0,5).forEach(s=>s.hab=2);
-  far.slice(5,13).forEach(s=>s.hab=1);
+  far.slice(0,SZ.eden).forEach(s=>s.hab=2);
+  far.slice(SZ.eden,SZ.eden+SZ.marg).forEach(s=>s.hab=1);
   stars.forEach(s=>{
     s.res=reserveMax(s);
     if(s.id===sol)return;
     let p=0.10+0.07*dist[s.id]+(s.hab===2?0.35:0);
-    if(rng()<Math.min(0.75,p)){s.host=Math.min(3,1+Math.floor(dist[s.id]/3)+(s.hab===2?1:0));s.etype=randEtype();}
+    if(rng()<Math.min(0.75,p)){
+      s.host=Math.min(4,1+Math.floor(dist[s.id]/3)+(s.hab===2?1:0));
+      s.etype=(s.host>=3&&rng()<0.25)?'dreadnought':randEtype();
+    }
   });
   const solStar=stars[sol];
   solStar.explored=true;solStar.scanned=true;solStar.rich=2;solStar.hab=0;solStar.host=0;solStar.res=reserveMax(solStar);
   rng=Math.random;
-  S={v:4,seed,diff:diff||'normal',stars,sol,bobs:[{id:1,name:'Bob',quirk:'the original. Probably.',fx:null,order:'manual',
+  S={v:5,size,seed,diff:diff||'normal',stars,sol,bobs:[{id:1,name:'Bob',quirk:'the original. Probably.',fx:null,order:'manual',
       sys:sol,matter:150,hull:80,status:'idle',eta:0,etaT:0,from:sol,dest:sol}],
     active:1,born:1,nextId:2,data:0,tech:{},colonies:0,log:[],won:false,over:false,t:0,muted:false,music:true,
     others:{awake:false,t0:0,next:0},story:{w:0,next:8,ally:false,target:-1},stats:{kills:0},
@@ -354,6 +384,7 @@ function migrate(){
   if(S.hiveDead===undefined)S.hiveDead=false;
   if(!S.ach)S.ach={};
   if(S.daily===undefined)S.daily=null;
+  if(!S.size)S.size='standard';
   if(!S.rival)S.rival={lvl:1,escapes:0,dead:false,next:S.others.awake?S.t+120:0};
   if(!S.rival.dead&&S.rival.next===0&&S.others.awake)S.rival.next=S.t+200;
   S.bobs.forEach(b=>{if(!b.order)b.order='manual';if(b.fx===undefined)b.fx=null});
@@ -726,13 +757,14 @@ function startCombat(bob,star,ambush){
   C.lines.push(`Contact: ${star.vex?'VEX — rogue replicant':(star.oth?'Others ':'')+ETYPES[star.etype].n} (class ${star.host}). ${ETYPES[star.etype].hint}.`);
   if(fleet.length>1)C.lines.push(`${fleet.length} Bobs answer the call.`);
   if(ambush){
-    const d=eDmgFor(star);bob.hull-=d;sfx('hit');
+    const d=incoming(star);bob.hull-=d;sfx('hit');
     C.lines.push(`They fire first. −${d} hull to ${bob.name}.`);
     if(bob.hull<=0){if(!fleetMemberDown(bob))return;}
   }
   renderCombat();
 }
 function pAttack(kind){
+  if(!C||C.over)return;
   const lead=C.fleet[0];
   const et=C.s.etype||'swarm';
   const w=weapLvl(),mult=WMULT[et][kind]||1;
@@ -748,22 +780,64 @@ function pAttack(kind){
       ?(16+14*w+8)*WMULT[et].plasma:(12+9*w+3)*WMULT[et].rail;
     sup+=Math.round(bd*0.6*(x.fx==='fighter'?1.2:1));
   });
-  const total=d+sup;
+  let total=d+sup,crit=false;
+  if(Math.random()<0.12){total=Math.round(total*1.6);crit=true;}
   C.eh-=total;
   fxVolley(kind);
-  C.lines.push(`${txt}${sup>0?` (+${C.fleet.length-1} in support)`:''}: −${total}${mult>1?' (effective!)':mult<1?' (resisted)':''}.`);
+  fxNum(enemyPos().x,enemyPos().y-26,'−'+total,crit?'#ffd9a0':'#dfeefb');
+  C.lines.push(`${crit?'CRITICAL — ':''}${txt}${sup>0?` (+${C.fleet.length-1} in support)`:''}: −${total}${mult>1?' (effective!)':mult<1?' (resisted)':''}.`);
   sfx('hit');
   if(C.eh<=0){victory();return;}
   if(C.s.vex&&!C.s.noEsc&&C.eh<0.3*C.em){vexEscape();return;}
-  const tgt=C.fleet[Math.floor(Math.random()*C.fleet.length)];
-  const e=eDmgFor(C.s);tgt.hull-=e;
-  fxReturnFire(tgt);
-  C.lines.push(`Return fire hits ${tgt.name}: −${e} hull.`);
-  if(tgt.hull<=0){if(!fleetMemberDown(tgt))return;}
+  if(!enemyFire(1))return;
   updateCombat();shakeModal();
 }
+/* enemy round: telegraphed heavy attacks, shields applied; returns false if combat ended */
+function enemyFire(mod){
+  let e=incoming(C.s);
+  if(C.tele){e=Math.round(e*2);C.tele=null;
+    C.lines.push(C.s.etype==='dreadnought'?'The main battery FIRES.':'The lunge lands!');}
+  e=Math.max(1,Math.round(e*mod));
+  const tgt=C.fleet[Math.floor(Math.random()*C.fleet.length)];
+  tgt.hull-=e;
+  fxReturnFire(tgt);
+  const ti=C.fleet.indexOf(tgt),tn=Math.min(C.fleet.length,5);
+  if(ti>-1&&ti<5){const tp=shipPos(ti,tn);fxNum(tp.x,tp.y-16,'−'+e,'#ff8a96');}
+  C.lines.push(`Return fire hits ${tgt.name}: −${e} hull${mod<1?' (evaded)':''}.`);
+  if(tgt.hull<=0){if(!fleetMemberDown(tgt))return false;}
+  // wind-up for next round
+  const et=C.s.etype;
+  if(!C.tele&&(et==='hunter'||et==='dreadnought')&&Math.random()<0.25){
+    C.tele='lunge';
+    C.lines.push(et==='dreadnought'?'⚠ The dreadnought is charging its main battery…':'⚠ The hunter-killer is winding up a lunge…');
+  }
+  return true;
+}
+function pEvade(){
+  if(!C||C.over)return;
+  const et=C.s.etype||'swarm',w=weapLvl();
+  const d=Math.max(2,Math.round((12+9*w)*0.3*WMULT[et].rail));
+  C.eh-=d;
+  fxVolley('rail');
+  C.lines.push(`Evasive pattern — snapshot: −${d}.`);
+  sfx('hit');
+  if(C.eh<=0){victory();return;}
+  if(C.s.vex&&!C.s.noEsc&&C.eh<0.3*C.em){vexEscape();return;}
+  if(!enemyFire(0.5))return;
+  updateCombat();
+}
+function pRepair(){
+  if(!C||C.over)return;
+  const tgt=C.fleet.slice().sort((a,b)=>a.hull/maxHull(a)-b.hull/maxHull(b))[0];
+  tgt.hull=Math.min(maxHull(tgt),tgt.hull+30);
+  C.lines.push(`Repair drones swarm ${tgt.name}: +30 hull.`);
+  fxBoom(40,60,'#6ee07a',8);
+  sfx('ok');
+  if(!enemyFire(1))return;
+  updateCombat();
+}
 function combatRewards(bob,star,str){
-  let m=120*str;if(bob.fx==='lucky')m=Math.round(m*1.2);
+  let m=120*str;if(bob.fx==='lucky')m=Math.round(m*1.2);if(S.tech.salvage)m=Math.round(m*1.5);
   const dd=dataGain(bob,8*str);
   bob.matter+=m;S.data+=dd;S.stats.kills++;ach('first_kill');
   if(!star.transient){
@@ -773,6 +847,14 @@ function combatRewards(bob,star,str){
   return {m,dd};
 }
 function victory(){
+  if(C.over)return;
+  C.over=true;
+  // death throes: let the finale play before the result modal
+  if(CV){const e=enemyPos();fxBoom(e.x,e.y,'#ff8a96',45);fxBoom(e.x,e.y,'#ffffff',25);CV.flash=0.4;CV.shake=9;}
+  setTimeout(victoryResolve,700);
+}
+function victoryResolve(){
+  if(!C)return;
   const star=C.s,lead=C.fleet[0],str=C.str,n=C.fleet.length;
   const r=combatRewards(lead,star,str);
   sfx('boom');setTimeout(()=>sfx('win'),350);
@@ -846,17 +928,15 @@ function vexEscape(){
   refresh();save();
 }
 function tryFlee(){
+  if(!C||C.over)return;
   const esc=C.fleet.some(x=>x.fx==='coward')?1:0.6;
   if(Math.random()<esc){
     if(C.s.vex)S.rival.next=S.t+120;
     const n=C.fleet.map(x=>x.name).join(', ');
     C=null;closeModal();toast('Disengaged. SURGE drives cooling.');log(`${n} disengaged from combat.`);refresh();return;
   }
-  const tgt=C.fleet[Math.floor(Math.random()*C.fleet.length)];
-  const e=eDmgFor(C.s);tgt.hull-=e;
-  fxReturnFire(tgt);
-  C.lines.push(`Disengage failed — they target ${tgt.name}: −${e} hull.`);sfx('hit');
-  if(tgt.hull<=0){if(!fleetMemberDown(tgt))return;}
+  C.lines.push('Disengage failed — they stay on you.');sfx('hit');
+  if(!enemyFire(1))return;
   updateCombat();shakeModal();
 }
 /* ---- combat scene (canvas animation) ---- */
@@ -869,9 +949,10 @@ function combatFxInit(){
   const r=c.getBoundingClientRect();
   c.width=r.width*dpr;c.height=120*dpr;
   const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);
-  CV={c,x,w:r.width,h:120,shots:[],parts:[],flash:0,shake:0,
+  CV={c,x,w:r.width,h:120,shots:[],parts:[],nums:[],flash:0,shake:0,
     stars:Array.from({length:30},()=>({x:Math.random()*r.width,y:Math.random()*120,a:Math.random()*0.5+0.1}))};
 }
+function fxNum(px,py,txt,col){if(CV)CV.nums.push({x:px,y:py,txt,col,life:1});}
 function fxBoom(px,py,col,n){if(!CV)return;
   for(let i=0;i<n;i++){const a=Math.random()*6.28,v=0.5+Math.random()*2.2;
     CV.parts.push({x:px,y:py,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,col});}}
@@ -956,6 +1037,14 @@ function drawCombatFrame(){
     x.globalAlpha=p.life;x.fillStyle=p.col;x.fillRect(p.x,p.y,2.2,2.2);x.globalAlpha=1;
     return true;
   });
+  CV.nums=CV.nums.filter(p=>{
+    p.y-=0.4;p.life-=0.018;
+    if(p.life<=0)return false;
+    x.globalAlpha=Math.min(1,p.life*1.5);x.fillStyle=p.col;
+    x.font='bold 12px -apple-system,sans-serif';x.textAlign='center';
+    x.fillText(p.txt,p.x,p.y);x.globalAlpha=1;
+    return true;
+  });
   if(CV.flash>0){x.fillStyle=`rgba(255,255,255,${CV.flash})`;x.fillRect(0,0,w,h);CV.flash-=0.04;}
   x.restore();
   requestAnimationFrame(drawCombatFrame);
@@ -998,6 +1087,9 @@ function updateCombat(){
   btn('f-rail','Railgun'+arrow('rail'),`~${12+9*w} dmg`);
   if(S.tech.weap2){modalFns['f-plasma']=()=>{pAttack('plasma');return 'keep'};btn('f-plasma','Plasma'+arrow('plasma'),`~${16+14*w}+ dmg`)}
   if(S.tech.weap3&&C.buster){modalFns['f-buster']=()=>{pAttack('buster');return 'keep'};btn('f-buster','Nova Buster','huge, once','bad')}
+  modalFns['f-evade']=()=>{pEvade();return 'keep'};
+  btn('f-evade','Evasive'+(C.tele?' ⚠':''),C.tele?'dodge the heavy hit!':'½ damage taken, light shot','dim');
+  if(S.tech.repair){modalFns['f-repair']=()=>{pRepair();return 'keep'};btn('f-repair','Repair Drones','+30 hull to weakest','dim')}
   modalFns['f-flee']=()=>{tryFlee();return 'keep'};
   btn('f-flee','Disengage',C.fleet.some(x=>x.fx==='coward')?'always escapes':'60% escape','dim');
   document.getElementById('cbtns').innerHTML=btns;
@@ -1026,7 +1118,7 @@ function autoCombat(b,s){
       eh-=Math.max(1,d);
       if(eh<=0)break;
     }
-    b.hull-=eDmgFor(s);
+    b.hull-=incoming(s);
   }
   if(eh<=0){
     const r=combatRewards(b,s,s.host||1);
@@ -1098,7 +1190,7 @@ function wakeOthers(){
   while(q.length){const u=q.shift();ST(u).links.forEach(v=>{if(dist[v]>dist[u]+1){dist[v]=dist[u]+1;q.push(v)}})}
   let home=null,bd=-1;
   S.stars.forEach(s=>{if(s.id!==S.sol&&!s.colony&&dist[s.id]>bd){bd=dist[s.id];home=s}});
-  home.oth=true;home.host=5;home.hive=true;home.etype='harvester';
+  home.oth=true;home.host=5;home.hive=true;home.etype='dreadnought';
   O.awake=true;O.t0=S.t;O.next=S.t+D().expand;
   S.rival.next=S.t+180; // VEX smells blood
   sfx('dread');
@@ -1123,7 +1215,8 @@ function captureSystem(t,quiet){
     }
     return;
   }
-  t.oth=true;t.host=Math.max(t.host,othClass());t.etype=randEtype();
+  t.oth=true;t.host=Math.max(t.host,othClass());
+  t.etype=(t.host>=3&&Math.random()<0.25)?'dreadnought':randEtype();
   if(known(t)){
     log(`The Others have taken ${t.name}.`,'bad');
     if(!quiet)toast(`⛒ The Others took ${t.name}`);
@@ -1238,11 +1331,12 @@ function arrive(b){
     if(s.host>0&&inter&&Math.random()<0.4){toast('⚠ Intercepted!');startCombat(b,s,true);}
     else if(inter&&s.host===0&&S.story.w===2&&s.alien)fireContact(b,s);
   }
-  // hunter-killer raids near Others territory
-  if(!C&&!S.over&&S.others.awake&&s.host===0&&!s.oth&&s.links.some(id=>ST(id).oth)&&Math.random()<D().raid){
+  // hunter-killer raids near Others territory (Stealth Coating blunts them)
+  const raidChance=D().raid*(S.tech.cloak?0.4:1);
+  if(!C&&!S.over&&S.others.awake&&s.host===0&&!s.oth&&s.links.some(id=>ST(id).oth)&&Math.random()<raidChance){
     const cls=Math.min(4,2+Math.floor((S.t-S.others.t0)/900));
     const fake={name:s.name,host:cls,oth:true,transient:true,etype:'hunter'};
-    if(inter){toast('⚠ HUNTER-KILLER INTERCEPT!');startCombat(b,fake,true);}
+    if(inter){toast('⚠ HUNTER-KILLER INTERCEPT!');startCombat(b,fake,!S.tech.cloak);}
     else{log(`${b.name} was intercepted by a hunter-killer near ${s.name}!`,'bad');autoCombat(b,fake);}
   }
   refresh();save();
@@ -1257,16 +1351,16 @@ function doScan(){
 }
 function doReplicate(){
   const b=activeBob(),s=ST(b.sys),cost=replCost();
-  if(b.status!=='idle'||s.host>0||b.matter<cost||S.bobs.length>=MAX_BOBS)return;
-  b.matter-=cost;b.status='repl';b.eta=20;b.etaT=20;
+  if(b.status!=='idle'||s.host>0||availMatter(b)<cost||S.bobs.length>=MAX_BOBS)return;
+  payMatter(b,cost);b.status='repl';b.eta=20;b.etaT=20;
   log(`<b>${b.name}</b> began printing a new matrix in ${s.name} (−${cost} ⬡).`);
   toast('⌬ Replication started — 20s');
   refresh();save();
 }
 function doColony(){
   const b=activeBob(),s=ST(b.sys),cost=colonyCost();
-  if(b.status!=='idle'||s.hab!==2||s.colony||s.host>0||!s.scanned||b.matter<cost)return;
-  b.matter-=cost;s.colony=true;S.colonies++;
+  if(b.status!=='idle'||s.hab!==2||s.colony||s.host>0||!s.scanned||availMatter(b)<cost)return;
+  payMatter(b,cost);s.colony=true;S.colonies++;
   sfx('win');ach('col1');
   log(`<b>COLONY ESTABLISHED at ${s.name}.</b> The beacon is lit. Colony ships are on their way. (${S.colonies}/3)`,'good');
   if(S.colonies>=3&&!S.won){
@@ -1285,16 +1379,16 @@ function doColony(){
 }
 function doTerra(){
   const b=activeBob(),s=ST(b.sys);
-  if(b.status!=='idle'||s.hab!==1||!S.tech.terra||s.host>0||s.terra!=null||b.matter<4000)return;
-  b.matter-=4000;s.terra=180;
+  if(b.status!=='idle'||s.hab!==1||!S.tech.terra||s.host>0||s.terra!=null||availMatter(b)<4000)return;
+  payMatter(b,4000);s.terra=180;
   log(`<b>Terraforming begun at ${s.name}.</b> Atmosphere processors deploying — 180s.`,'acc');
   toast('🌱 Terraforming — 3 min');
   refresh();save();
 }
 function doDefense(){
   const b=activeBob(),s=ST(b.sys),cost=defCost(s);
-  if(b.status!=='idle'||s.host>0||s.def>=3||b.matter<cost||!(s.colony||s.id===S.sol))return;
-  b.matter-=cost;s.def++;
+  if(b.status!=='idle'||s.host>0||s.def>=3||availMatter(b)<cost||!(s.colony||s.id===S.sol))return;
+  payMatter(b,cost);s.def++;
   sfx('ok');log(`Defense platform Lv${s.def} online at ${s.name}.`,'acc');toast(`🛡 ${s.name} — defenses Lv${s.def}`);
   refresh();save();
 }
@@ -1327,8 +1421,9 @@ function tick(){
         if(s.res>0)s.res=Math.max(0,s.res-m);
         b.matter+=m;
       }
-      // repairs cost matter now
-      if(b.hull<maxHull(b)&&b.matter>=0.5){b.hull=Math.min(maxHull(b),b.hull+0.5);b.matter-=0.5;}
+      // repairs cost matter — unless you have Self-Repair Nanites
+      if(S.tech.repair){if(b.hull<maxHull(b))b.hull=Math.min(maxHull(b),b.hull+1);}
+      else if(b.hull<maxHull(b)&&b.matter>=0.5){b.hull=Math.min(maxHull(b),b.hull+0.5);b.matter-=0.5;}
       if(b.order!=='manual'&&(S.t+b.id)%2===0)aiTick(b);
     }
   }
@@ -1494,17 +1589,18 @@ function renderSystem(){
     if(!s.scanned)h+=`<button class="btn" data-act="scan">📡 Deep scan system<span class="bsub">+✦ research data</span></button>`;
     const rc=replCost();
     const full=S.bobs.length>=MAX_BOBS;
-    h+=`<button class="btn" data-act="repl" ${(b.matter<rc||full)?'disabled':''}>⌬ Replicate — new Bob<span class="bsub">${full?'matrix capacity reached':rc+' ⬡ · 20s · he\'ll be… mostly you'}</span></button>`;
+    const av=availMatter(b),pool=S.tech.scut?' (fleet pool)':'';
+    h+=`<button class="btn" data-act="repl" ${(av<rc||full)?'disabled':''}>⌬ Replicate — new Bob<span class="bsub">${full?'matrix capacity reached':rc+' ⬡'+pool+' · 20s · he\'ll be… mostly you'}</span></button>`;
     if(s.hab===2&&!s.colony){
       const cc=colonyCost();
-      h+=`<button class="btn" data-act="colony" ${(!s.scanned||b.matter<cc)?'disabled':''}>⌂ Establish colony<span class="bsub">${cc} ⬡${!s.scanned?' · requires deep scan':''} — humanity moves in</span></button>`;
+      h+=`<button class="btn" data-act="colony" ${(!s.scanned||av<cc)?'disabled':''}>⌂ Establish colony<span class="bsub">${cc} ⬡${pool}${!s.scanned?' · requires deep scan':''} — humanity moves in</span></button>`;
     }
     if(s.hab===1&&S.tech.terra&&s.terra==null){
-      h+=`<button class="btn" data-act="terra" ${b.matter<4000?'disabled':''}>🌱 Terraform world<span class="bsub">4000 ⬡ · 180s — marginal becomes a garden world</span></button>`;
+      h+=`<button class="btn" data-act="terra" ${av<4000?'disabled':''}>🌱 Terraform world<span class="bsub">4000 ⬡${pool} · 180s — marginal becomes a garden world</span></button>`;
     }
     if(s.terra!=null)h+=`<div class="sub" style="color:var(--acc);margin-top:8px">🌱 Terraforming in progress — ${s.terra}s</div>`;
     if((s.colony||s.id===S.sol)&&s.def<3){
-      h+=`<button class="btn" data-act="defense" ${b.matter<defCost(s)?'disabled':''}>🛡 Defense platform Lv${s.def+1}<span class="bsub">${defCost(s)} ⬡ — fights sieges even when no Bob is here</span></button>`;
+      h+=`<button class="btn" data-act="defense" ${av<defCost(s)?'disabled':''}>🛡 Defense platform Lv${s.def+1}<span class="bsub">${defCost(s)} ⬡${pool} — fights sieges even when no Bob is here</span></button>`;
     }
     if(s.colony)h+=`<div class="sub" style="color:var(--good);margin-top:8px">⌂ A human colony thrives here. They named a lake after you.</div>`;
   }
@@ -1707,8 +1803,11 @@ function showStarCard(s){
   const isHere=b.sys===s.id;
   let h=`<h2>${s.name}</h2>
   <div class="chips">${s.explored?'<span class="chip acc">explored</span>':'<span class="chip">uncharted</span>'}${intelChips(s)}</div>`;
-  const bobsHere=S.bobs.filter(x=>x.sys===s.id&&x.status!=='travel').map(x=>x.name);
-  if(bobsHere.length)h+=`<div class="sub">⌬ On station: ${bobsHere.join(', ')}</div>`;
+  const bobsHere=S.bobs.filter(x=>x.sys===s.id&&x.status!=='travel');
+  if(bobsHere.length)h+=`<div class="sub">⌬ On station: ${bobsHere.map(x=>x.name).join(', ')}</div>`;
+  bobsHere.filter(x=>x.id!==S.active).slice(0,3).forEach(x=>{
+    h+=`<button class="btn dim" data-act="bob:${x.id}" style="min-height:42px">⌬ Take control of ${x.name}</button>`;
+  });
   if(isHere)h+=`<button class="btn dim" data-act="tab:sys">Open system view</button>`;
   else if(linked){
     const secs=jumpSecs(Math.hypot(s.x-here.x,s.y-here.y),b);
@@ -1721,10 +1820,16 @@ function showStarCard(s){
 function intro(){
   const diffBtns=Object.keys(DIFFS).map(k=>({
     label:'Launch — '+DIFFS[k].label,sub:DIFFS[k].sub,cls:k==='doom'?'bad':k==='hard'?'dim':'',
-    fn:()=>{S.diff=k;save();help();return 'keep'}
+    fn:()=>{sizePick(k);return 'keep'}
   }));
   diffBtns.push({label:'🌌 Daily Challenge',sub:"today's galaxy — identical for everyone, on Hard",cls:'blue',
     fn:()=>{newGame('hard',dailySeed(),dailyTagStr());setTab('map');help();return 'keep'}});
+  window.sizePick=diff=>{
+    showModal('GALAXY SIZE',
+     'How much sky do you want? Larger galaxies mean longer campaigns, more garden worlds — and far more room for the Others to fester.',
+     Object.keys(SIZES).map(sz=>({label:SIZES[sz].label,sub:SIZES[sz].sub,cls:sz==='vast'?'blue':sz==='large'?'dim':'',
+       fn:()=>{newGame(diff,null,null,sz);setTab('map');help();return 'keep'}})));
+  };
   showModal('WE ARE LEGION',
    `<span class="g">// 2133. Earth is dying.</span><br><br>
    You were <b>Robert Johansson</b> — engineer, sci-fi nerd, recently deceased. You woke up 117 years later as the uploaded mind of a <b>self-replicating Von Neumann probe</b>, flung into the dark with one job:<br><br>
@@ -1739,7 +1844,7 @@ function help(){
    <b>✦ Explore</b> — tap stars, jump to linked systems. First visits and scans earn ✦ for research.<br><br>
    <b>⌬ Replicate</b> — print new Bobs. Replicative drift gives some of them real bonuses.<br><br>
    <b>⚙ Standing orders</b> — in FLEET, set Bobs to EXPLORE / EXPAND / GUARD and they act on their own.<br><br>
-   <b>⚔ Know your enemy</b> — railguns shred <b>drone swarms</b>, plasma pierces <b>harvesters</b>, and <b>hunter-killers</b> just hit hard. Watch the ▲▼ hints.<br><br>
+   <b>⚔ Know your enemy</b> — railguns shred <b>drone swarms</b>, plasma pierces <b>harvesters</b>, <b>hunter-killers</b> hit hard, and <b>dreadnoughts</b> shrug off everything but Nova Busters. Watch the ▲▼ hints — and when an enemy <i>winds up</i> a heavy attack, go <b>Evasive</b>.<br><br>
    <b>⛒ The Others</b> — they expand forever and accelerate as you grow. They besiege colonies — and <b>if Sol falls, you lose</b>. Build 🛡 defense platforms at colonies and Sol. Somewhere out there is their <b>HIVE</b> — find it, gather your Bobs in one system, and destroy it to end the war for good. Bobs in the same system <b>fight as a fleet</b>.<br><br>
    <b>♫ And something else is out there.</b> Listen for it. (Something nastier is out there too. He has a name.)<br><br>
    <b>⌂ Win</b> — colonies on 3 🌍 garden worlds. Restart anytime with ⟲.<br><br>
@@ -1766,7 +1871,9 @@ document.addEventListener('click',e=>{
     case 'share':shareScore();break;
     case 'zreset':MV.k=1;MV.ox=0;MV.oy=0;break;
     case 'jump':doJump(+v);break;
-    case 'bob':S.active=+v;toast('Direct control: '+activeBob().name);refresh();save();break;
+    case 'bob':S.active=+v;toast('Direct control: '+activeBob().name);refresh();
+      if(selectedStar>=0&&curTab==='map')showStarCard(ST(selectedStar));
+      save();break;
     case 'ord':{const [id,o]=v.split(':');setOrder(+id,o);break;}
     case 'scan':doScan();break;
     case 'repl':doReplicate();break;
