@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#05080f">
+<title>WE ARE LEGION — a Bobiverse-inspired game</title>
+<style>
+:root{
+  --bg:#05080f; --panel:#0c1320; --panel2:#101a2c; --line:#1d2c47;
+  --txt:#d4e6f2; --dim:#7b93ad; --acc:#4be1c3; --acc2:#39b4ff;
+  --warn:#ffb454; --bad:#ff5d6c; --good:#6ee07a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+/* top bar */
+#top{padding:calc(env(safe-area-inset-top) + 6px) 10px 6px;display:flex;align-items:center;gap:8px;
+  background:#070b14;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.res{font-variant-numeric:tabular-nums;font-size:13px;color:var(--dim);background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;padding:4px 8px;white-space:nowrap}
+.res b{color:var(--txt);font-weight:600}
+#bobchip{margin-left:auto;background:rgba(75,225,195,.12);border:1px solid rgba(75,225,195,.4);
+  color:var(--acc);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600}
+.icobtn{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:8px;
+  padding:4px 9px;font-size:14px}
+/* main views */
+#main{flex:1;position:relative;overflow:hidden}
+.view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px;display:none}
+.view.on{display:block}
+#view-map{padding:0;overflow:hidden}
+#map{display:block;width:100%;height:100%}
+/* star card overlay */
+#starcard{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(12,19,32,.95);
+  border:1px solid var(--line);border-radius:14px;padding:12px;display:none;backdrop-filter:blur(6px)}
+#starcard.on{display:block}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{font-size:12px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--dim);background:var(--panel)}
+.chip.good{color:var(--good);border-color:rgba(110,224,122,.4)}
+.chip.bad{color:var(--bad);border-color:rgba(255,93,108,.4)}
+.chip.warn{color:var(--warn);border-color:rgba(255,180,84,.4)}
+.chip.acc{color:var(--acc);border-color:rgba(75,225,195,.4)}
+/* panels & buttons */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+h2{font-size:16px;margin:0 0 4px;letter-spacing:.04em}
+h3{font-size:13px;margin:14px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em}
+.sub{color:var(--dim);font-size:13px;line-height:1.45}
+.btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:50px;
+  margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(75,225,195,.45);
+  background:rgba(75,225,195,.1);color:var(--acc);font-size:15px;font-weight:600;text-align:center;line-height:1.3}
+.btn:active{background:rgba(75,225,195,.25)}
+.btn.bad{border-color:rgba(255,93,108,.5);background:rgba(255,93,108,.1);color:var(--bad)}
+.btn.bad:active{background:rgba(255,93,108,.25)}
+.btn.dim{border-color:var(--line);background:var(--panel2);color:var(--dim)}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.bsub{font-size:12px;font-weight:400;color:var(--dim);margin-top:2px}
+.row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);
+  border-radius:12px;background:var(--panel2);margin-top:8px}
+.row .grow{flex:1;min-width:0}
+.row .t1{font-size:14px;font-weight:600}
+.row .t2{font-size:12px;color:var(--dim);margin-top:2px;line-height:1.35}
+.minibtn{border:1px solid rgba(75,225,195,.45);background:rgba(75,225,195,.1);color:var(--acc);
+  border-radius:10px;padding:9px 12px;font-size:13px;font-weight:600;white-space:nowrap}
+.minibtn[disabled]{opacity:.4;pointer-events:none}
+/* bars */
+.bar{height:7px;border-radius:4px;background:#0a101c;border:1px solid var(--line);overflow:hidden;margin-top:5px}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .4s}
+.bar.red i{background:var(--bad)}
+.bar.org i{background:var(--warn)}
+/* tabs */
+#tabs{display:flex;border-top:1px solid var(--line);background:#070b14;
+  padding-bottom:max(env(safe-area-inset-bottom),8px)}
+.tab{flex:1;padding:10px 0 6px;text-align:center;color:var(--dim);font-size:10px;letter-spacing:.06em;border:none;background:none}
+.tab span{display:block;font-size:18px;margin-bottom:2px;filter:grayscale(1) opacity(.6)}
+.tab.on{color:var(--acc)}
+.tab.on span{filter:none}
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(2,5,10,.8);display:none;align-items:flex-end;
+  justify-content:center;z-index:50;backdrop-filter:blur(4px)}
+#modal.on{display:flex}
+#modalbox{width:100%;max-width:480px;max-height:82%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:var(--panel);border:1px solid var(--line);border-radius:18px 18px 0 0;
+  padding:18px 16px calc(env(safe-area-inset-bottom) + 16px)}
+.mtitle{font-size:17px;font-weight:700;letter-spacing:.05em;color:var(--acc);margin-bottom:8px}
+.mbody{font-size:14px;line-height:1.55;color:var(--txt)}
+.mbody .g{color:var(--acc2);font-family:ui-monospace,Menlo,monospace;font-size:13px}
+/* log */
+.logline{font-size:13px;line-height:1.5;padding:7px 0;border-bottom:1px solid #101827;color:var(--dim)}
+.logline b{color:var(--txt)}
+.logline.acc{color:var(--acc)}
+.logline.bad{color:var(--bad)}
+.logline.good{color:var(--good)}
+/* toast */
+#toast{position:fixed;top:calc(env(safe-area-inset-top) + 54px);left:50%;transform:translateX(-50%) translateY(-8px);
+  background:rgba(12,19,32,.97);border:1px solid var(--acc);color:var(--txt);padding:9px 16px;border-radius:12px;
+  font-size:13px;opacity:0;pointer-events:none;transition:all .25s;z-index:60;max-width:88%;text-align:center}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+/* combat */
+.cname{display:flex;justify-content:space-between;font-size:13px;margin-top:10px}
+.clog{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--dim);background:#080d17;
+  border:1px solid var(--line);border-radius:10px;padding:9px;margin-top:12px;min-height:64px;line-height:1.6}
+.fightbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.fightbtns .btn{margin-top:0;min-height:56px}
+.legend{position:absolute;top:8px;left:10px;font-size:11px;color:var(--dim);line-height:1.7;
+  background:rgba(5,8,15,.7);padding:6px 9px;border-radius:10px;pointer-events:none}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <span class="res">⬡ <b id="r-matter">0</b></span>
+    <span class="res">✦ <b id="r-data">0</b></span>
+    <span class="res">⌂ <b id="r-col">0/3</b></span>
+    <button id="bobchip" data-act="tab:fleet">BOB-1</button>
+    <button class="icobtn" data-act="help">?</button>
+    <button class="icobtn" id="mutebtn" data-act="mute">♪</button>
+  </div>
+  <div id="main">
+    <div class="view on" id="view-map">
+      <canvas id="map"></canvas>
+      <div class="legend">
+        <span class="dot" style="background:#4be1c3"></span>your probes<br>
+        <span class="dot" style="background:#6ee07a"></span>garden world<br>
+        <span class="dot" style="background:#ff5d6c"></span>hostiles<br>
+        <span class="dot" style="background:#3a4d6b"></span>uncharted
+      </div>
+      <div id="starcard"></div>
+    </div>
+    <div class="view" id="view-sys"></div>
+    <div class="view" id="view-fleet"></div>
+    <div class="view" id="view-tech"></div>
+    <div class="view" id="view-log"></div>
+  </div>
+  <div id="tabs">
+    <button class="tab on" data-act="tab:map"><span>✦</span>MAP</button>
+    <button class="tab" data-act="tab:sys"><span>☉</span>SYSTEM</button>
+    <button class="tab" data-act="tab:fleet"><span>⌬</span>FLEET</button>
+    <button class="tab" data-act="tab:tech"><span>⚛</span>TECH</button>
+    <button class="tab" data-act="tab:log"><span>≡</span>LOG</button>
+  </div>
+</div>
+<div id="modal"><div id="modalbox"></div></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ============ WE ARE LEGION — an unofficial fan game inspired by
+   Dennis E. Taylor's Bobiverse novels. Original code & text. ============ */
+
+const $=s=>document.querySelector(s);
+const SAVE_KEY='we-are-legion-v1';
+
+/* ---------- rng ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let rng=Math.random;
+const ri=(a,b)=>a+Math.floor(rng()*(b-a+1));
+const pick=arr=>arr[Math.floor(rng()*arr.length)];
+
+/* ---------- static data ---------- */
+const STAR_NAMES=["Alpha Centauri","Epsilon Eridani","Tau Ceti","Barnard's Star","Sirius","Procyon",
+"61 Cygni","Epsilon Indi","Wolf 359","Ross 128","Luyten's Star","Lacaille 9352","Gliese 581",
+"Kapteyn's Star","40 Eridani","Delta Pavonis","82 Eridani","Beta Hydri","Groombridge 34",
+"Teegarden's Star","YZ Ceti","Kruger 60","Vega","Altair","Delta Eridani","Omicron Eridani",
+"Gliese 667","Trappist-1","Van Maanen's Star","Ross 154","EZ Aquarii","Gliese 876"];
+const BOB_NAMES=["Bill","Riker","Homer","Milo","Mario","Luke","Bender","Calvin","Goku","Garfield",
+"Marvin","Hal","Ralph","Oliver","Hannibal","Loki","Thor","Linus","Icarus","Daedalus","Rocky",
+"Ziggy","Sparky","Elmer","Herschel","Neil","Hungry","Dopey","Bashful","Tycho"];
+const QUIRKS=["claims he's the original. He is not.","built a virtual beach office with infinite coffee.",
+"speaks mostly in old movie quotes.","renamed every drone after a famous physicist.",
+"insists on dramatic pauses before every jump.","keeps a virtual cat named Schrödinger. Obviously.",
+"hums elevator music over the fleet channel.","is writing a 12-volume memoir nobody asked for.",
+"thinks of himself as the responsible one.","added racing stripes to his hull. They help.",
+"refuses to round numbers. Ever.","practices villain monologues 'just in case.'"];
+
+const TECHS=[
+ {k:'mining1',n:'Autofactory Drones',c:25,d:'+60% mining rate for every Bob.'},
+ {k:'mining2',n:'Nanite Refineries',c:70,d:'+60% more mining.',req:'mining1'},
+ {k:'drive1',n:'SURGE Drive Mk II',c:30,d:'+50% jump speed.'},
+ {k:'drive2',n:'SURGE Drive Mk III',c:85,d:'Jump speed doubled again.',req:'drive1'},
+ {k:'weap1',n:'Railgun Array',c:20,d:'+9 railgun damage per level.'},
+ {k:'weap2',n:'Plasma Spike',c:60,d:'Unlocks the Plasma Spike attack.',req:'weap1'},
+ {k:'weap3',n:'Nova Buster',c:140,d:'Unlocks a devastating once-per-battle strike.',req:'weap2'},
+ {k:'hull1',n:'Ablative Plating',c:30,d:'+40 max hull for every Bob.'},
+ {k:'hull2',n:'Adaptive Armor',c:90,d:'+80 more max hull.',req:'hull1'},
+ {k:'suddar',n:'SUDDAR Long-Range',c:55,d:'Reveal intel on systems adjacent to your Bobs.'},
+];
+
+/* ---------- state ---------- */
+let S=null;       // game state
+let C=null;       // active combat
+let modalFns={};  // modal button handlers
+let selectedStar=-1;
+let curTab='map';
+
+const ST=id=>S.stars[id];
+const activeBob=()=>S.bobs.find(b=>b.id===S.active)||S.bobs[0];
+const techLvl=p=>TECHS.filter(t=>t.k.startsWith(p)&&S.tech[t.k]).length;
+const maxHull=()=>80+(S.tech.hull1?40:0)+(S.tech.hull2?80:0);
+const mineRate=s=>+(s.rich*1.6*(1+0.6*techLvl('mining'))).toFixed(1);
+const replCost=()=>Math.round(350*Math.pow(1.35,S.born-1));
+const jumpSecs=d=>Math.max(4,Math.ceil(d*400/(6+3*techLvl('drive'))));
+
+/* ---------- new game / galaxy gen ---------- */
+function newGame(){
+  const seed=(Date.now()^(Math.random()*1e9))>>>0;
+  rng=mulberry32(seed);
+  // place stars
+  const stars=[]; let guard=0;
+  while(stars.length<26&&guard++<6000){
+    const x=0.08+rng()*0.84, y=0.07+rng()*0.80;
+    if(stars.every(s=>Math.hypot(s.x-x,s.y-y)>0.125)) stars.push({x,y});
+  }
+  // Sol = star closest to bottom-center
+  let sol=0,best=9;
+  stars.forEach((s,i)=>{const d=Math.hypot(s.x-0.5,s.y-0.88);if(d<best){best=d;sol=i}});
+  const names=STAR_NAMES.slice(); for(let i=names.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
+  stars.forEach((s,i)=>{s.id=i;s.name=i===sol?'Sol':names.pop();s.links=[];
+    s.explored=false;s.scanned=false;s.colony=false;s.rich=ri(1,5);s.hab=0;s.host=0;});
+  // edges: 3 nearest neighbours
+  const addEdge=(a,b)=>{if(a!==b&&!stars[a].links.includes(b)){stars[a].links.push(b);stars[b].links.push(a)}};
+  stars.forEach((s,i)=>{
+    stars.map((o,j)=>({j,d:Math.hypot(o.x-s.x,o.y-s.y)})).filter(e=>e.j!==i)
+      .sort((p,q)=>p.d-q.d).slice(0,3).forEach(e=>addEdge(i,e.j));
+  });
+  // ensure connectivity
+  const comp=()=>{const c=stars.map(()=>-1);let n=0;
+    stars.forEach((s,i)=>{if(c[i]<0){const q=[i];c[i]=n;
+      while(q.length){const u=q.pop();stars[u].links.forEach(v=>{if(c[v]<0){c[v]=n;q.push(v)}})}n++}});
+    return {c,n}};
+  for(let it=0;it<40;it++){const {c,n}=comp();if(n===1)break;
+    let bd=9,ba=0,bb=0;
+    stars.forEach((s,i)=>stars.forEach((o,j)=>{if(c[i]!==c[j]){const d=Math.hypot(o.x-s.x,o.y-s.y);
+      if(d<bd){bd=d;ba=i;bb=j}}}));
+    addEdge(ba,bb);}
+  // graph distance from Sol
+  const dist=stars.map(()=>99);dist[sol]=0;const q=[sol];
+  while(q.length){const u=q.shift();stars[u].links.forEach(v=>{if(dist[v]>dist[u]+1){dist[v]=dist[u]+1;q.push(v)}})}
+  // habitability: 4 garden worlds + 6 marginal, all at distance >= 2
+  const far=stars.filter(s=>s.id!==sol&&dist[s.id]>=2).sort(()=>rng()-0.5);
+  far.slice(0,4).forEach(s=>s.hab=2);
+  far.slice(4,10).forEach(s=>s.hab=1);
+  // hostiles
+  stars.forEach(s=>{if(s.id===sol)return;
+    let p=0.10+0.07*dist[s.id]+(s.hab===2?0.35:0);
+    if(rng()<Math.min(0.75,p)) s.host=Math.min(3,1+Math.floor(dist[s.id]/3)+(s.hab===2?1:0));
+  });
+  const solStar=stars[sol];
+  solStar.explored=true;solStar.scanned=true;solStar.rich=2;solStar.hab=0;solStar.host=0;
+  rng=Math.random;
+  S={v:1,seed,stars,sol,bobs:[{id:1,name:'Bob',quirk:'the original. Probably.',sys:sol,
+      matter:150,hull:80,status:'idle',eta:0,etaT:0,from:sol,dest:sol}],
+    active:1,born:1,nextId:2,data:0,tech:{},colonies:0,log:[],won:false,t:0,muted:false};
+  log('GUPPI: Core systems nominal. Replicant matrix stable. Welcome back, Bob.','acc');
+  log('Mission: locate and settle 3 garden worlds for the colony ships waiting at Sol.');
+  save();
+}
+
+/* ---------- save / load ---------- */
+function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const j=localStorage.getItem(SAVE_KEY);if(j){S=JSON.parse(j);return true}}catch(e){}return false}
+
+/* ---------- log & toast ---------- */
+function log(msg,cls){S.log.unshift({m:msg,c:cls||''});if(S.log.length>120)S.log.length=120;
+  if(curTab==='log')renderLog();}
+let toastT=null;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');
+  clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2300);}
+
+/* ---------- audio ---------- */
+let AC=null;
+function sfx(kind){
+  if(!S||S.muted)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
+    const play=(f,t0,dur,type,vol)=>{const o=AC.createOscillator(),g=AC.createGain();
+      o.type=type||'sine';o.frequency.value=f;g.gain.value=0;
+      g.gain.setValueAtTime(0,AC.currentTime+t0);
+      g.gain.linearRampToValueAtTime(vol||0.06,AC.currentTime+t0+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+t0+dur);
+      o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+t0);o.stop(AC.currentTime+t0+dur+0.05);};
+    if(kind==='tap')play(620,0,0.05,'sine',0.03);
+    else if(kind==='ok'){play(520,0,0.08);play(780,0.07,0.12)}
+    else if(kind==='bad'){play(220,0,0.18,'square',0.05);play(160,0.1,0.22,'square',0.05)}
+    else if(kind==='jump'){play(880,0,0.3,'sine',0.04);play(440,0.1,0.35,'sine',0.04)}
+    else if(kind==='hit'){play(140,0,0.12,'sawtooth',0.07)}
+    else if(kind==='boom'){play(90,0,0.4,'sawtooth',0.09);play(60,0.05,0.5,'square',0.07)}
+    else if(kind==='win'){[523,659,784,1047].forEach((f,i)=>play(f,i*0.12,0.25,'sine',0.05))}
+  }catch(e){}
+}
+
+/* ---------- modal ---------- */
+function showModal(title,body,btns){
+  modalFns={};
+  let h=`<div class="mtitle">${title}</div><div class="mbody">${body}</div>`;
+  (btns||[{label:'Continue'}]).forEach((b,i)=>{
+    const act='m'+i;
+    modalFns[act]=b.fn||(()=>{});
+    h+=`<button class="btn ${b.cls||''}" data-act="${act}">${b.label}${b.sub?`<span class="bsub">${b.sub}</span>`:''}</button>`;
+  });
+  $('#modalbox').innerHTML=h;$('#modal').classList.add('on');
+}
+function closeModal(){$('#modal').classList.remove('on');modalFns={};}
+
+/* ---------- events (narrative) ---------- */
+const EVENTS=[
+ {t:'DERELICT PROBE',b:s=>`SUDDAR picks up a tumbling wreck in ${s.name}'s outer belt — another Von Neumann probe, ancient and dead. Its autofactory module looks intact.`,
+  ch:[
+   {l:'Salvage the wreck',f:(b,s)=>{if(Math.random()<0.3){b.hull=Math.max(1,b.hull-18);b.matter+=220;sfx('bad');
+      return 'A defence charge was still live. You ate shrapnel (−18 hull) but the haul was worth it: +220 ⬡.'}
+      b.matter+=260;sfx('ok');return 'Clean salvage. The autofactory parts net +260 ⬡.'}},
+   {l:'Study its design',f:(b,s)=>{S.data+=26;sfx('ok');return 'Whoever built it knew things you don\'t. Yet. +26 ✦ research data.'}},
+   {l:'Leave it be',f:()=>'You log the coordinates and move on. Something about it felt like a gravestone.'}]},
+ {t:'COMET HARVEST',b:s=>`A volatile-rich comet is falling through ${s.name}. GUPPI estimates a short intercept window.`,
+  ch:[
+   {l:'Intercept and harvest',f:b=>{b.matter+=170;sfx('ok');return 'Drones strip-mine the nucleus on the fly-by. +170 ⬡.'}},
+   {l:'Let it pass',f:()=>{S.data+=8;return 'You take spectrographs as it goes. +8 ✦.'}}]},
+ {t:'SUBSPACE ECHO',b:s=>`A structured signal repeats on the SCUT band near ${s.name}. It is not human. It is not yours.`,
+  ch:[
+   {l:'Respond with primes',f:(b,s)=>{if(Math.random()<0.35&&s.host===0){s.host=1;sfx('bad');
+      return 'The reply is a targeting handshake. Hostile replicants are inbound to this system!'}
+      S.data+=30;sfx('ok');return 'The source answers with a burst of clean mathematics. +30 ✦.'}},
+   {l:'Listen silently',f:()=>{S.data+=12;return 'You record everything and say nothing. +12 ✦. GUPPI approves.'}}]},
+ {t:'PRIMITIVE LIFE',b:s=>`Telescopes resolve oceans and chlorophyll-analogue forests on a moon in ${s.name}. Something down there is building fires.`,
+  ch:[
+   {l:'Observe from orbit',f:()=>{S.data+=32;sfx('ok');return 'Months of careful study. They sing to the moonrise. +32 ✦.'}},
+   {l:'Drop a survey drone',f:b=>{if(Math.random()<0.4){return 'The drone is captured and worshipped within a week. GUPPI files this under "oops."'}
+      S.data+=20;b.matter+=40;return 'Discreet sampling complete. +20 ✦, +40 ⬡ from the regolith.'}}]},
+ {t:'SOLAR FLARE',b:s=>`${s.name}'s primary is throwing a coronal mass ejection straight down your orbit.`,
+  ch:[
+   {l:'Shelter behind a planet (−40 ⬡)',f:b=>{if(b.matter>=40){b.matter-=40;return 'You burn reaction mass and ride out the storm in a planetary shadow. No damage.'}
+      b.hull=Math.max(1,b.hull-15);sfx('bad');return 'Not enough matter for the burn. The flare scours your hull. −15 hull.'}},
+   {l:'Ride it out',f:b=>{b.hull=Math.max(1,b.hull-15);sfx('bad');return 'Radiation slams the hull for −15. The forecast, GUPPI notes, was in the briefing.'}}]},
+ {t:'SEED FACTORY',b:s=>`Buried in an asteroid in ${s.name}: a dormant autofactory seed from some long-dead expansion wave. It still responds to handshake.`,
+  ch:[
+   {l:'Reboot it under your control',f:b=>{b.matter+=240;sfx('ok');return 'It wakes, prints, and obeys. +240 ⬡ in refined matter.'}},
+   {l:'Dismantle it for study',f:()=>{S.data+=24;return 'Its template language is elegant and alien. +24 ✦.'}}]},
+ {t:'ARCHIVE GHOST',b:s=>`Deep in your own memory archive you find a corrupted recording from Earth: a baseball game, summer 2025, crowd noise like surf.`,
+  ch:[
+   {l:'Restore it',f:()=>{S.data+=15;return 'You spend three subjective days on the restoration. Worth it. +15 ✦ and something harder to quantify.'}},
+   {l:'Seal the file',f:()=>'Some things you save for a day when you can afford to feel them.'}]},
+ {t:'MICROMETEORITE SWARM',b:s=>`${s.name}'s ecliptic is filthy with high-velocity gravel. Threading it will cost you one way or another.`,
+  ch:[
+   {l:'Burn matter to shield (−30 ⬡)',f:b=>{if(b.matter>=30){b.matter-=30;return 'Sacrificial plating takes the hits. Hull intact.'}
+      b.hull=Math.max(1,b.hull-10);sfx('bad');return 'No matter to spare. −10 hull, and a new respect for gravel.'}},
+   {l:'Fly it manually',f:b=>{if(Math.random()<0.5)return 'You frame-jack to maximum and thread the swarm like a video game. Flawless.';
+      b.hull=Math.max(1,b.hull-10);sfx('bad');return 'Mostly flawless. −10 hull.'}}]},
+ {t:'REPLICATIVE DRIFT',b:s=>`During a routine backup you find a divergent memory thread — a version of you that made different choices. It asks to be instantiated.`,
+  ch:[
+   {l:'Instantiate him',f:(b,s)=>{if(S.bobs.length>=14)return 'Matrix capacity is at its limit. He elects to wait in archive. Patiently. Probably.';
+      spawnBob(s.id);sfx('win');return 'A new Bob wakes up laughing at a joke you almost remember. The fleet grows by one — for free.'}},
+   {l:'Archive the thread',f:()=>{S.data+=18;return 'You study the divergence instead. +18 ✦, and a faint sense of guilt.'}}]},
+];
+function maybeEvent(bob,star){
+  const ev=EVENTS[Math.floor(Math.random()*EVENTS.length)];
+  const choices=ev.ch.map((c,i)=>({label:c.l,fn:()=>{
+    const res=c.f(bob,star);
+    log(`[${ev.t}] ${res}`);
+    showModal(ev.t,res,[{label:'Continue'}]);
+    refresh();save();
+    return 'keep';
+  }}));
+  showModal(ev.t,ev.b(star),choices);
+}
+
+/* ---------- bobs ---------- */
+function spawnBob(sysId){
+  const used=S.bobs.map(b=>b.name);
+  const name=BOB_NAMES.find(n=>!used.includes(n))||('Bob-'+S.nextId);
+  const b={id:S.nextId++,name,quirk:QUIRKS[Math.floor(Math.random()*QUIRKS.length)],
+    sys:sysId,matter:50,hull:maxHull(),status:'idle',eta:0,etaT:0,from:sysId,dest:sysId};
+  S.bobs.push(b);S.born++;
+  log(`<b>${name}</b> comes online in ${ST(sysId).name}. Replicative drift: he ${b.quirk}`,'good');
+  toast(`⌬ ${name} has joined the fleet`);
+  return b;
+}
+function bobDown(b){
+  C=null;closeModal();sfx('boom');
+  S.bobs=S.bobs.filter(x=>x.id!==b.id);
+  log(`<b>${b.name}</b> was destroyed in ${ST(b.sys).name}. His last backup was... not recent.`,'bad');
+  if(S.bobs.length===0){
+    showModal('SIGNAL LOST',
+     `The last of you is gone. Somewhere back at Sol, colony ships drift in silence, waiting for a beacon that will never come.<br><br>But a Von Neumann probe is an idea as much as a machine — and ideas can be relaunched.`,
+     [{label:'Begin again',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();intro();refresh();}}]);
+    return;
+  }
+  if(S.active===b.id)S.active=S.bobs[0].id;
+  showModal('WE ARE FEWER',
+   `${b.name}'s matrix is gone — scattered across ${ST(b.sys).name} as expanding plasma. The fleet observes one subjective minute of silence.<br><br><span class="g">GUPPI: ${S.bobs.length} replicant${S.bobs.length>1?'s':''} remaining.</span>`,
+   [{label:'Carry on'}]);
+  refresh();save();
+}
+
+/* ---------- combat ---------- */
+const weapLvl=()=>techLvl('weap');
+function startCombat(bob,star,ambush){
+  C={b:bob,s:star,str:star.host,eh:35+30*star.host,em:35+30*star.host,buster:true,lines:[]};
+  C.lines.push(`Contact: hostile replicant ${star.host>1?'pack':'unit'} (class ${star.host}).`);
+  if(ambush){
+    const d=edmg();bob.hull-=d;sfx('hit');
+    C.lines.push(`They fire first. −${d} hull.`);
+    if(bob.hull<=0){bobDown(bob);return;}
+  }
+  renderCombat();
+}
+const edmg=()=>5+6*C.str+Math.floor(Math.random()*7);
+function pAttack(kind){
+  let d=0,txt='';
+  const w=weapLvl();
+  if(kind==='rail'){d=12+9*w+Math.floor(Math.random()*7);txt=`Railgun salvo: −${d} to hostile.`}
+  else if(kind==='plasma'){d=16+14*w+Math.floor(Math.random()*17);txt=`Plasma spike connects: −${d}.`}
+  else if(kind==='buster'){d=70+Math.floor(Math.random()*26);C.buster=false;txt=`NOVA BUSTER. The sky goes white. −${d}.`}
+  C.eh-=d;C.lines.push(txt);sfx('hit');
+  if(C.eh<=0){victory();return;}
+  const e=edmg();C.b.hull-=e;C.lines.push(`Return fire: −${e} hull.`);
+  if(C.b.hull<=0){bobDown(C.b);return;}
+  renderCombat();
+}
+function victory(){
+  const star=C.s,bob=C.b,str=C.str;
+  star.host=0;
+  const m=120*str,dd=8*str;
+  bob.matter+=m;S.data+=dd;
+  sfx('boom');setTimeout(()=>sfx('win'),350);
+  log(`<b>${bob.name}</b> cleared the hostiles in ${star.name}. Salvage: +${m} ⬡, +${dd} ✦.`,'good');
+  C=null;
+  showModal('SYSTEM CLEARED',
+   `The last hostile comes apart in a slow tumble of glowing debris. ${star.name} is yours.<br><br><span class="g">Salvage recovered: +${m} ⬡ &nbsp; +${dd} ✦</span>`,
+   [{label:'Continue'}]);
+  refresh();save();
+}
+function tryFlee(){
+  if(Math.random()<0.6){C=null;closeModal();toast('Disengaged. SURGE drive cooling.');log(`${activeBob().name} disengaged from combat.`);refresh();return;}
+  const e=edmg();C.b.hull-=e;C.lines.push(`Disengage failed — they stay on you. −${e} hull.`);sfx('hit');
+  if(C.b.hull<=0){bobDown(C.b);return;}
+  renderCombat();
+}
+function renderCombat(){
+  modalFns={};
+  const b=C.b,w=weapLvl();
+  const hb=Math.max(0,Math.round(100*b.hull/maxHull()));
+  const he=Math.max(0,Math.round(100*C.eh/C.em));
+  let h=`<div class="mtitle">⚔ ENGAGEMENT — ${C.s.name}</div>
+  <div class="cname"><span>${b.name}</span><span>${Math.max(0,Math.round(b.hull))}/${maxHull()}</span></div>
+  <div class="bar"><i style="width:${hb}%"></i></div>
+  <div class="cname"><span style="color:var(--bad)">Hostile replicants</span><span>${Math.max(0,Math.round(C.eh))}/${C.em}</span></div>
+  <div class="bar red"><i style="width:${he}%"></i></div>
+  <div class="clog">${C.lines.slice(-4).join('<br>')}</div>
+  <div class="fightbtns">`;
+  const btn=(act,lab,sub,cls)=>{h+=`<button class="btn ${cls||''}" data-act="${act}">${lab}<span class="bsub">${sub}</span></button>`};
+  modalFns['f-rail']=()=>{pAttack('rail');return 'keep'};
+  btn('f-rail','Railgun',`~${12+9*w} dmg`);
+  if(S.tech.weap2){modalFns['f-plasma']=()=>{pAttack('plasma');return 'keep'};btn('f-plasma','Plasma Spike',`~${16+14*w}+ dmg`)}
+  if(S.tech.weap3&&C.buster){modalFns['f-buster']=()=>{pAttack('buster');return 'keep'};btn('f-buster','Nova Buster','huge, once','bad')}
+  modalFns['f-flee']=()=>{tryFlee();return 'keep'};
+  btn('f-flee','Disengage','60% escape','dim');
+  h+='</div>';
+  $('#modalbox').innerHTML=h;$('#modal').classList.add('on');
+}
+
+/* ---------- actions ---------- */
+function doJump(starId){
+  const b=activeBob();if(b.status!=='idle')return;
+  const s=ST(b.sys),d=ST(starId);
+  if(!s.links.includes(starId))return;
+  const secs=jumpSecs(Math.hypot(d.x-s.x,d.y-s.y));
+  b.status='travel';b.from=b.sys;b.dest=starId;b.eta=secs;b.etaT=secs;
+  sfx('jump');log(`<b>${b.name}</b> jumping ${s.name} → ${d.name} (${secs}s).`);
+  $('#starcard').classList.remove('on');selectedStar=-1;
+  refresh();save();
+}
+function arrive(b){
+  b.status='idle';b.sys=b.dest;
+  const s=ST(b.sys);
+  if(!s.explored){
+    s.explored=true;
+    const d=10+Math.floor(Math.random()*9);S.data+=d;
+    sfx('ok');log(`<b>${b.name}</b> is first into <b>${s.name}</b>. +${d} ✦ survey data.`,'acc');
+    if(s.hab===2){toast('🌍 Garden world detected!');log(`GUPPI: ${s.name} hosts a garden world. Colony candidate confirmed.`,'good');}
+    if(s.host>0){
+      if(Math.random()<0.5){toast('⚠ AMBUSH!');startCombat(b,s,true);}
+      else{toast(`⚠ Hostiles in ${s.name}`);sfx('bad');log(`Hostile replicants detected in ${s.name} (class ${s.host}). Mining suspended.`,'bad');}
+    }else if(Math.random()<0.5){maybeEvent(b,s);}
+  }else{
+    log(`${b.name} arrived at ${s.name}.`);
+    if(s.host>0&&Math.random()<0.4){toast('⚠ Intercepted!');startCombat(b,s,true);}
+  }
+  refresh();save();
+}
+function doScan(){
+  const b=activeBob(),s=ST(b.sys);
+  if(s.scanned||b.status!=='idle'||s.host>0)return;
+  s.scanned=true;const d=6+s.rich+Math.floor(Math.random()*5);S.data+=d;
+  sfx('ok');log(`Deep scan of ${s.name} complete. +${d} ✦.`);
+  if(Math.random()<0.3)maybeEvent(b,s);
+  refresh();save();
+}
+function doReplicate(){
+  const b=activeBob(),s=ST(b.sys),cost=replCost();
+  if(b.status!=='idle'||s.host>0||b.matter<cost)return;
+  b.matter-=cost;b.status='repl';b.eta=20;b.etaT=20;
+  log(`<b>${b.name}</b> began printing a new matrix in ${s.name} (−${cost} ⬡).`);
+  toast('⌬ Replication started — 20s');
+  refresh();save();
+}
+function doColony(){
+  const b=activeBob(),s=ST(b.sys);
+  if(b.status!=='idle'||s.hab!==2||s.colony||s.host>0||!s.scanned||b.matter<1500)return;
+  b.matter-=1500;s.colony=true;S.colonies++;
+  sfx('win');
+  log(`<b>COLONY ESTABLISHED at ${s.name}.</b> The beacon is lit. Colony ships are on their way. (${S.colonies}/3)`,'good');
+  if(S.colonies>=3&&!S.won){
+    S.won=true;
+    showModal('🌍 MISSION COMPLETE',
+     `Three beacons burn across the dark, and behind each one a world is waking up: landers, habitats, the first impossible green of Earth grass under an alien sun.<br><br>You were one man, once. Now you are a legion — and humanity's future is measured in galaxies.<br><br><span class="g">GUPPI: Mission parameters satisfied. Shall we keep going anyway?<br>Fleet: ${S.bobs.length} • Systems explored: ${S.stars.filter(x=>x.explored).length}/${S.stars.length}</span>`,
+     [{label:'Keep exploring (endless mode)'}]);
+  }else{
+    showModal('⌂ COLONY ESTABLISHED',
+     `${s.name} is officially humanity's newest home. GUPPI plays a fanfare he composed himself. It's... not bad.<br><br><span class="g">Colonies: ${S.colonies}/3</span>`,
+     [{label:'Continue'}]);
+  }
+  refresh();save();
+}
+function buyTech(k){
+  const t=TECHS.find(x=>x.k===k);
+  if(!t||S.tech[k]||S.data<t.c||(t.req&&!S.tech[t.req]))return;
+  S.data-=t.c;S.tech[k]=true;
+  if(k==='hull1'||k==='hull2'){const mh=maxHull();S.bobs.forEach(b=>{b.hull=Math.min(mh,b.hull+(k==='hull1'?40:80))});}
+  sfx('ok');log(`Research complete: <b>${t.n}</b>.`,'acc');toast(`⚛ ${t.n}`);
+  refresh();save();
+}
+
+/* ---------- tick ---------- */
+function tick(){
+  if(!S)return;
+  S.t++;
+  for(const b of S.bobs.slice()){
+    if(b.status==='travel'){b.eta--;if(b.eta<=0)arrive(b);}
+    else if(b.status==='repl'){b.eta--;if(b.eta<=0){b.status='idle';spawnBob(b.sys);refresh();save();}}
+    else{ // idle: mine + repair
+      const s=ST(b.sys);
+      if(s.host===0)b.matter+=mineRate(s);
+      if(b.hull<maxHull())b.hull=Math.min(maxHull(),b.hull+0.5);
+    }
+  }
+  if(S.t%10===0)save();
+  renderTop();
+  if(curTab==='sys')renderSystem();
+  else if(curTab==='fleet')renderFleet();
+}
+
+/* ---------- intel helpers ---------- */
+const isKnown=s=>s.explored||s.links.some(id=>ST(id).explored);
+const hasIntel=s=>s.explored||(S.tech.suddar&&s.links.some(id=>S.bobs.some(b=>b.sys===id&&b.status!=='travel')));
+const habTxt=['—','marginal','🌍 GARDEN'];
+function intelChips(s){
+  if(!hasIntel(s))return `<span class="chip">intel: unknown</span>`;
+  let h=`<span class="chip">⬡ richness ${'▮'.repeat(s.rich)}${'▯'.repeat(5-s.rich)}</span>`;
+  if(s.hab===2)h+=`<span class="chip good">🌍 garden world</span>`;
+  else if(s.hab===1)h+=`<span class="chip warn">marginal world</span>`;
+  if(s.colony)h+=`<span class="chip good">⌂ colony</span>`;
+  if(s.host>0)h+=`<span class="chip bad">⚠ hostiles ×${s.host}</span>`;
+  else if(s.explored)h+=`<span class="chip acc">secure</span>`;
+  return h;
+}
+
+/* ---------- rendering ---------- */
+function renderTop(){
+  const b=activeBob();
+  $('#r-matter').textContent=Math.floor(b.matter);
+  $('#r-data').textContent=Math.floor(S.data);
+  $('#r-col').textContent=S.colonies+'/3';
+  $('#bobchip').textContent=b.name.toUpperCase()+' ▾';
+  $('#mutebtn').textContent=S.muted?'∅':'♪';
+}
+function setTab(t){
+  curTab=t;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  $('#view-'+t).classList.add('on');
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.act==='tab:'+t));
+  if(t==='map'){fitCanvas();}
+  refresh();
+}
+function refresh(){
+  renderTop();
+  if(curTab==='sys')renderSystem();
+  else if(curTab==='fleet')renderFleet();
+  else if(curTab==='tech')renderTech();
+  else if(curTab==='log')renderLog();
+}
+function statusTxt(b){
+  if(b.status==='travel')return `in transit → ${ST(b.dest).name} (${b.eta}s)`;
+  if(b.status==='repl')return `replicating (${b.eta}s)`;
+  const s=ST(b.sys);
+  return s.host>0?'holding — hostiles present':`mining +${mineRate(s)} ⬡/s`;
+}
+function renderSystem(){
+  const b=activeBob(),s=ST(b.sys);
+  let h=`<div class="panel"><h2>☉ ${s.name}</h2><div class="sub">${b.name} ${b.status==='travel'?'— en route from '+ST(b.from).name:'on station'} · hull ${Math.round(b.hull)}/${maxHull()}</div>
+  <div class="bar ${b.hull/maxHull()<0.35?'red':''}"><i style="width:${Math.round(100*b.hull/maxHull())}%"></i></div>
+  <div class="chips">${intelChips(s)}</div>`;
+  if(b.status==='travel'){
+    const p=Math.round(100*(1-b.eta/b.etaT));
+    h+=`<div class="sub">SURGE drive engaged — arrival at <b>${ST(b.dest).name}</b> in ${b.eta}s</div>
+    <div class="bar org"><i style="width:${p}%"></i></div></div>`;
+    $('#view-sys').innerHTML=h;return;
+  }
+  if(b.status==='repl'){
+    const p=Math.round(100*(1-b.eta/b.etaT));
+    h+=`<div class="sub">Autofactory printing a new replicant matrix — ${b.eta}s</div>
+    <div class="bar"><i style="width:${p}%"></i></div></div>`;
+    $('#view-sys').innerHTML=h;return;
+  }
+  // idle actions
+  if(s.host>0){
+    h+=`<div class="sub" style="color:var(--bad)">Hostile replicants control this system. Mining and construction suspended.</div>
+    <button class="btn bad" data-act="engage">⚔ Engage hostiles<span class="bsub">threat class ${s.host}</span></button>`;
+  }else{
+    h+=`<div class="sub">Autofactory output: <b style="color:var(--acc)">+${mineRate(s)} ⬡/s</b></div>`;
+    if(!s.scanned)h+=`<button class="btn" data-act="scan">📡 Deep scan system<span class="bsub">+✦ research data</span></button>`;
+    const rc=replCost();
+    h+=`<button class="btn" data-act="repl" ${b.matter<rc?'disabled':''}>⌬ Replicate — new Bob<span class="bsub">${rc} ⬡ · 20s · he'll be… mostly you</span></button>`;
+    if(s.hab===2&&!s.colony){
+      h+=`<button class="btn" data-act="colony" ${(!s.scanned||b.matter<1500)?'disabled':''}>⌂ Establish colony<span class="bsub">1500 ⬡${!s.scanned?' · requires deep scan':''} — humanity moves in</span></button>`;
+    }
+    if(s.colony)h+=`<div class="sub" style="color:var(--good);margin-top:8px">⌂ A human colony thrives here. They named a lake after you.</div>`;
+  }
+  h+=`</div><h3>Jump targets</h3>`;
+  s.links.forEach(id=>{
+    const d=ST(id),dist=Math.hypot(d.x-s.x,d.y-s.y);
+    const secs=jumpSecs(dist);
+    h+=`<div class="row"><div class="grow"><div class="t1">${d.explored?'':'◌ '}${isKnown(d)?d.name:'Uncharted system'}</div>
+    <div class="t2">${(dist*40).toFixed(1)} ly · ${secs}s jump</div><div class="chips" style="margin:6px 0 0">${intelChips(d)}</div></div>
+    <button class="minibtn" data-act="jump:${id}">JUMP</button></div>`;
+  });
+  $('#view-sys').innerHTML=h;
+}
+function renderFleet(){
+  let h=`<div class="panel"><h2>⌬ THE FLEET</h2><div class="sub">We are ${S.bobs.length}. We are legion. Tap a Bob to take direct control — each mines, fights and builds where he is.</div></div>`;
+  S.bobs.forEach(b=>{
+    const act=b.id===S.active;
+    h+=`<div class="row" style="${act?'border-color:rgba(75,225,195,.5)':''}">
+    <div class="grow"><div class="t1" style="${act?'color:var(--acc)':''}">${b.name}${act?' ◂ active':''}</div>
+    <div class="t2">${ST(b.sys).name} · ${statusTxt(b)} · ⬡ ${Math.floor(b.matter)}</div>
+    <div class="t2" style="font-style:italic">${b.name==='Bob'?'He is ':'He '}${b.quirk}</div>
+    <div class="bar ${b.hull/maxHull()<0.35?'red':''}"><i style="width:${Math.round(100*b.hull/maxHull())}%"></i></div></div>
+    ${act?'':`<button class="minibtn" data-act="bob:${b.id}">SELECT</button>`}</div>`;
+  });
+  $('#view-fleet').innerHTML=h;
+}
+function renderTech(){
+  let h=`<div class="panel"><h2>⚛ RESEARCH</h2><div class="sub">Spend ✦ survey data — earned by exploring, scanning and fighting — on fleet-wide upgrades. Balance: <b style="color:var(--acc)">✦ ${Math.floor(S.data)}</b></div></div>`;
+  TECHS.forEach(t=>{
+    const owned=!!S.tech[t.k],locked=t.req&&!S.tech[t.req];
+    h+=`<div class="row" style="${owned?'opacity:.55':''}"><div class="grow">
+    <div class="t1">${t.n}</div><div class="t2">${t.d}${locked?` · requires ${TECHS.find(x=>x.k===t.req).n}`:''}</div></div>
+    ${owned?'<span class="chip good">OWNED</span>'
+      :`<button class="minibtn" data-act="buy:${t.k}" ${(locked||S.data<t.c)?'disabled':''}>✦ ${t.c}</button>`}</div>`;
+  });
+  $('#view-tech').innerHTML=h;
+}
+function renderLog(){
+  let h=`<div class="panel"><h2>≡ MISSION LOG</h2><div class="sub">Systems explored: ${S.stars.filter(x=>x.explored).length}/${S.stars.length} · Fleet: ${S.bobs.length} · Colonies: ${S.colonies}/3</div></div>`;
+  S.log.forEach(l=>{h+=`<div class="logline ${l.c}">${l.m}</div>`});
+  h+=`<button class="btn dim" data-act="reset" style="margin-top:16px">⟲ Abandon mission (new game)</button>
+  <div class="sub" style="margin:14px 0 30px;text-align:center">An unofficial fan game inspired by the <i>Bobiverse</i> novels by Dennis E. Taylor.<br>Go read them — they're great.</div>`;
+  $('#view-log').innerHTML=h;
+}
+
+/* ---------- map ---------- */
+const cv=$('#map');const ctx=cv.getContext('2d');
+let mapW=0,mapH=0,dust=[];
+function fitCanvas(){
+  const r=cv.parentElement.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr;cv.height=r.height*dpr;
+  cv.style.width=r.width+'px';cv.style.height=r.height+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  mapW=r.width;mapH=r.height;
+  dust=[];for(let i=0;i<90;i++)dust.push({x:Math.random()*mapW,y:Math.random()*mapH,r:Math.random()*1.1+0.2,a:Math.random()*0.5+0.1});
+}
+const PADX=26,PADTOP=26,PADBOT=40;
+const sx=s=>PADX+s.x*(mapW-2*PADX);
+const sy=s=>PADTOP+s.y*(mapH-PADTOP-PADBOT);
+function drawMap(now){
+  if(!S||!mapW)return;
+  ctx.clearRect(0,0,mapW,mapH);
+  // dust
+  ctx.fillStyle='#26344d';
+  dust.forEach(d=>{ctx.globalAlpha=d.a;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);ctx.fill()});
+  ctx.globalAlpha=1;
+  // edges
+  ctx.lineWidth=1;
+  S.stars.forEach(s=>s.links.forEach(id=>{
+    if(id<s.id)return;const o=ST(id);
+    if(!isKnown(s)||!isKnown(o))return;
+    ctx.strokeStyle=(s.explored&&o.explored)?'rgba(90,130,180,0.35)':'rgba(60,85,120,0.18)';
+    ctx.beginPath();ctx.moveTo(sx(s),sy(s));ctx.lineTo(sx(o),sy(o));ctx.stroke();
+  }));
+  const pulse=0.5+0.5*Math.sin(now/400);
+  // stars
+  S.stars.forEach(s=>{
+    if(!isKnown(s))return;
+    const x=sx(s),y=sy(s);
+    const intel=hasIntel(s);
+    if(s.id===selectedStar){ctx.strokeStyle='rgba(75,225,195,0.9)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(x,y,13+pulse*2,0,7);ctx.stroke();}
+    if(intel&&s.host>0){ctx.strokeStyle=`rgba(255,93,108,${0.5+0.4*pulse})`;ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(x,y,9,0,7);ctx.stroke();}
+    if(intel&&s.hab===2){ctx.strokeStyle='rgba(110,224,122,0.9)';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.arc(x,y,6.5,0,7);ctx.stroke();}
+    ctx.fillStyle=s.colony?'#6ee07a':s.explored?'#dfeefb':'#3a4d6b';
+    ctx.beginPath();ctx.arc(x,y,s.explored?3.5:3,0,7);ctx.fill();
+    if(s.explored||s.id===selectedStar){
+      ctx.fillStyle=s.id===S.sol?'#9fb8d4':'rgba(140,165,195,0.85)';
+      ctx.font='10px -apple-system,sans-serif';ctx.textAlign='center';
+      ctx.fillText(isKnown(s)?s.name:'?',x,y+18);
+    }
+  });
+  // bobs
+  S.bobs.forEach(b=>{
+    let x,y;
+    if(b.status==='travel'){
+      const f=ST(b.from),t=ST(b.dest),p=1-b.eta/b.etaT;
+      x=sx(f)+(sx(t)-sx(f))*p;y=sy(f)+(sy(t)-sy(f))*p;
+    }else{const s=ST(b.sys);x=sx(s);y=sy(s)-9;}
+    const act=b.id===S.active;
+    ctx.fillStyle=act?'#4be1c3':'rgba(75,225,195,0.55)';
+    ctx.beginPath();ctx.moveTo(x,y-4.5);ctx.lineTo(x+3.5,y+3);ctx.lineTo(x-3.5,y+3);ctx.closePath();ctx.fill();
+    if(act){ctx.strokeStyle=`rgba(75,225,195,${0.25+0.3*pulse})`;ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(x,y,8+pulse*2,0,7);ctx.stroke();}
+  });
+  requestAnimationFrame(drawMap);
+}
+cv.addEventListener('click',e=>{
+  const r=cv.getBoundingClientRect();
+  const px=e.clientX-r.left,py=e.clientY-r.top;
+  let best=null,bd=30;
+  S.stars.forEach(s=>{if(!isKnown(s))return;
+    const d=Math.hypot(sx(s)-px,sy(s)-py);if(d<bd){bd=d;best=s}});
+  if(!best){$('#starcard').classList.remove('on');selectedStar=-1;return;}
+  sfx('tap');selectedStar=best.id;showStarCard(best);
+});
+function showStarCard(s){
+  const b=activeBob(),here=ST(b.sys);
+  const linked=here.links.includes(s.id)&&b.status==='idle';
+  const isHere=b.sys===s.id;
+  let h=`<h2>${isKnown(s)&&(s.explored||hasIntel(s))?s.name:s.explored?s.name:isKnown(s)?s.name:'?'}</h2>
+  <div class="chips">${s.explored?'<span class="chip acc">explored</span>':'<span class="chip">uncharted</span>'}${intelChips(s)}</div>`;
+  const bobsHere=S.bobs.filter(x=>x.sys===s.id&&x.status!=='travel').map(x=>x.name);
+  if(bobsHere.length)h+=`<div class="sub">⌬ On station: ${bobsHere.join(', ')}</div>`;
+  if(isHere)h+=`<button class="btn dim" data-act="tab:sys">Open system view</button>`;
+  else if(linked){
+    const secs=jumpSecs(Math.hypot(s.x-here.x,s.y-here.y));
+    h+=`<button class="btn" data-act="jump:${s.id}">⟶ Jump ${b.name} here<span class="bsub">${secs}s via SURGE drive</span></button>`;
+  }else h+=`<div class="sub" style="margin-top:6px">${b.status!=='idle'?b.name+' is busy.':'Not linked to '+b.name+'’s current system — plot a route through connected stars.'}</div>`;
+  const card=$('#starcard');card.innerHTML=h;card.classList.add('on');
+}
+
+/* ---------- intro & help ---------- */
+function intro(){
+  showModal('WE ARE LEGION',
+   `<span class="g">// 2133. Earth is dying.</span><br><br>
+   You were <b>Robert Johansson</b> — engineer, sci-fi nerd, recently deceased. You woke up 117 years later as the uploaded mind of a <b>self-replicating Von Neumann probe</b>, flung into the dark with one job:<br><br>
+   <b>Find humanity a new home.</b> Three garden worlds, secured and beaconed, before the colony ships run out of time.<br><br>
+   <span class="g">GUPPI: May I suggest we begin by not dying, sir?</span>`,
+   [{label:'Launch',sub:'GUPPI will brief you on the way',fn:()=>{help();return 'keep'}}]);
+}
+function help(){
+  showModal('GUPPI BRIEFING',
+   `<b>☉ Mine</b> — every idle Bob automatically mines ⬡ matter in his system. Richer systems mine faster.<br><br>
+   <b>✦ Explore</b> — tap stars on the map and jump to linked systems. First visits and deep scans earn ✦ data for research.<br><br>
+   <b>⌬ Replicate</b> — spend ⬡ to print new Bobs. Each one acts independently — switch between them in FLEET. More Bobs, more everything.<br><br>
+   <b>⚔ Fight</b> — hostile replicants guard the best systems. Research weapons and hull before picking fights you can't finish.<br><br>
+   <b>⌂ Win</b> — establish colonies on 3 🌍 garden worlds.<br><br>
+   <span class="g">Progress autosaves on this device. GUPPI out.</span>`,
+   [{label:'Understood'}]);
+}
+
+/* ---------- input delegation ---------- */
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');
+  if(!el)return;
+  const act=el.dataset.act;
+  if(modalFns[act]){sfx('tap');const r=modalFns[act]();if(r!=='keep')closeModal();return;}
+  const i=act.indexOf(':');
+  const k=i<0?act:act.slice(0,i), v=i<0?'':act.slice(i+1);
+  if(k!=='tab')sfx('tap');
+  switch(k){
+    case 'tab':setTab(v);break;
+    case 'help':help();break;
+    case 'mute':S.muted=!S.muted;renderTop();save();break;
+    case 'jump':doJump(+v);break;
+    case 'bob':S.active=+v;toast('Direct control: '+activeBob().name);refresh();save();break;
+    case 'scan':doScan();break;
+    case 'repl':doReplicate();break;
+    case 'colony':doColony();break;
+    case 'engage':{const b=activeBob(),s=ST(b.sys);if(s.host>0&&b.status==='idle')startCombat(b,s,false);break;}
+    case 'buy':buyTech(v);break;
+    case 'reset':
+      showModal('ABANDON MISSION?','All Bobs, colonies and research will be lost to the void. A fresh probe launches from a freshly generated galaxy.',
+       [{label:'Yes — start over',cls:'bad',fn:()=>{localStorage.removeItem(SAVE_KEY);newGame();setTab('map');intro();}},
+        {label:'No — keep going',cls:'dim'}]);
+      break;
+  }
+});
+// close modal on backdrop tap (but never during combat)
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal'&&!C)closeModal();});
+window.addEventListener('resize',fitCanvas);
+
+/* ---------- boot ---------- */
+const hadSave=load();
+if(!hadSave)newGame();
+fitCanvas();
+renderTop();
+requestAnimationFrame(drawMap);
+setInterval(tick,1000);
+if(!hadSave)intro();else toast('Save loaded — welcome back, '+activeBob().name);
+</script>
+</body>
+</html>
