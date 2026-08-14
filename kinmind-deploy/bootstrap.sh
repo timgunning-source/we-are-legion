@@ -144,9 +144,17 @@ cat <<'NOTE'
     Paste it below. It is NOT echoed and NOT saved to shell history.
 NOTE
 printf '    Token: '
-read -rs TOKEN
+# Read from the terminal, not stdin: stdin may be the script itself when this
+# is run as `curl ... | bash`, in which case a plain `read` gets script text.
+if [ -r /dev/tty ]; then
+  read -rs TOKEN < /dev/tty
+else
+  read -rs TOKEN
+fi
 printf '\n'
-[ -n "$TOKEN" ] || die "no token entered"
+[ -n "$TOKEN" ] || die "no token entered.
+       If you ran this with 'curl ... | bash', download it first instead:
+         curl -sSL <url> -o /tmp/bootstrap.sh && bash /tmp/bootstrap.sh"
 
 printf '%s\n' "https://x-access-token:${TOKEN}@github.com" > /root/.git-credentials
 chmod 600 /root/.git-credentials
