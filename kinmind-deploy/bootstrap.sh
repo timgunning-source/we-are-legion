@@ -60,8 +60,12 @@ backups/
 GROW-REQUEST.md
 
 # ---- secrets ---------------------------------------------------------------
-.env
+# .env* deliberately catches timestamped copies too, e.g.
+#   .env.bak-2026-08-09T18-45-51
+# which a bare ".env" / "*.env" pair does NOT match.
+.env*
 *.env
+*.env.*
 !.env.example
 
 # ---- this box's own configuration -----------------------------------------
